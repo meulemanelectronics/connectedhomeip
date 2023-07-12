@@ -237,6 +237,8 @@ declare_args() {
   chip_enable_segger_rtt = chip_device_platform != "qpg"
 }
 
+print("=========chip_device_platform: ${chip_device_platform}")
+print("=========current_os: ${current_os}")
 assert(
     (current_os != "freertos" && chip_device_platform == "none") ||
         chip_device_platform == "fake" ||
@@ -257,5 +259,5 @@ assert(
         chip_device_platform == "bl702" || chip_device_platform == "bl702l" ||
         chip_device_platform == "mt793x" || chip_device_platform == "SiWx917" ||
         chip_device_platform == "openiotsdk" || chip_device_platform == "asr" ||
-        chip_device_platform == "stm32",
+        chip_device_platform == "stm32" || chip_device_platform == "renesas",
     "Please select a valid value for chip_device_platform")
