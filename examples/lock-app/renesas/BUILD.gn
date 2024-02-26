@@ -43,7 +43,6 @@ static_library("chip-lock-app")
     "${chip_root}/src/setup_payload",
     "${chip_root}/src/system",
     "${chip_root}/src/transport",
-    "${chip_root}/third_party/jsoncpp",
     "${chip_root}/src/app:app",
     "${chip_root}/examples/lock-app/lock-common",
     "${chip_root}/src/credentials:credentials"
