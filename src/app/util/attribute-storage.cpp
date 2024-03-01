@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
+#include <cstdint>
 #include <app/util/attribute-storage.h>
 
 #include <app/AttributeAccessInterfaceCache.h>
