@@ -55,6 +55,8 @@ chip_project_config_include_dirs =
     "//../../../../../../common/generic/",
     "//../../../../../ARM-software/CMSIS_5/CMSIS/Core/Include/",
     "//../../../../../ARMmbed/mbedtls/include/",
+    "//../../../../../keyvalue-store/include/",
+    "//../../../../../keyvalue-store/kv-store/",
     "//../../../../../segger-rtt/rtt/",
     "//../../../../../../application_ICS2000/BUILD/chip/gen/third_party/connectedhomeip/examples/lock-app/lock-common/zapgen"
     ]
