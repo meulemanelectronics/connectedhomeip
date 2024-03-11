@@ -281,6 +281,7 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
       device_layer_target_define = "CYW30739"
       defines += [ "CHIP_DEVICE_LAYER_TARGET=Infineon/CYW30739" ]
     }else if (chip_device_platform == "renesas") {
+      device_layer_target_define = "RENESAS"
       defines += [
         "CHIP_DEVICE_LAYER_TARGET_RENESAS=1",
         "CHIP_DEVICE_LAYER_TARGET=renesas",
@@ -360,6 +361,7 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
       "OPEN_IOT_SDK",
       "ASR",
       "STM32",
+      "RENESAS",
     ]
     foreach(possible_device_layer_target_define,
             possible_device_layer_target_defines) {

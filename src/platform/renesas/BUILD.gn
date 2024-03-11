@@ -43,7 +43,7 @@ static_library("renesas") {
     "SystemTimeSupport.cpp",
   ]
 
-  defines = [ "CHIP_SYSTEM_CONFIG_USE_LWIP=1", "FSL_RTOS_FREE_RTOS=1" ]
+  defines = ["CHIP_HAVE_CONFIG_H=1", "CHIP_SYSTEM_CONFIG_USE_LWIP=1", "FSL_RTOS_FREE_RTOS=1" ]
 
   deps = [ "${chip_root}/src/crypto" ]
 
