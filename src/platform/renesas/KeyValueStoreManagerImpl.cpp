@@ -23,6 +23,9 @@
 
 #include "cy_result.h"
 #include <platform/KeyValueStoreManager.h>
+#include <lib/support/logging/CHIPLogging.h>
+
+#define FACTORY_ERASE 0
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -38,6 +41,10 @@ CHIP_ERROR KeyValueStoreManagerImpl::Init()
 {
     cy_rslt_t result = mtb_key_value_store_init(&kvstore_obj);
     init_success     = (CY_RSLT_SUCCESS == result) ? true : false;
+
+#if FACTORY_ERASE
+    Erase();
+#endif
 
     return ConvertCyResultToChip(result);
 }
