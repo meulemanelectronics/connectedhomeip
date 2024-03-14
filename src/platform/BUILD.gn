@@ -263,10 +263,8 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
       device_layer_target_define = "CYW30739"
       defines += [ "CHIP_DEVICE_LAYER_TARGET=Infineon/CYW30739" ]
     } else if (chip_device_platform == "renesas") {
-      defines += [
-        device_layer_target_define= = "RENESAS",
-        "CHIP_DEVICE_LAYER_TARGET=renesas",
-      ]
+      device_layer_target_define = "RENESAS"
+      defines += [ "CHIP_DEVICE_LAYER_TARGET=renesas" ]
     } else if (chip_device_platform == "webos") {
       device_layer_target_define = "WEBOS"
       defines += [
@@ -304,7 +302,7 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
       defines += [ "CHIP_DEVICE_LAYER_TARGET=stm32" ]
     } else if (chip_device_platform == "renesas") {
       device_layer_target_define = "RENESAS"
-      defines += [ ""CHIP_DEVICE_LAYER_TARGET="RENESAS" ]
+      defines += [ "CHIP_DEVICE_LAYER_TARGET=RENESAS" ]
     } else {
       device_layer_target_define = ""
     }

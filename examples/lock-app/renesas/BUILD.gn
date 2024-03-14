@@ -105,7 +105,6 @@ group("default") {
         "${chip_root}/src/setup_payload:setup_payload",
         "${chip_root}/src/system:system",
         "${chip_root}/src/system:system_config_header",
-        "${chip_root}/src/trace:trace",
         "${chip_root}/src/tracing:tracing",
         "${chip_root}/src/transport:transport",
         "${chip_root}/src/transport/raw:raw",
