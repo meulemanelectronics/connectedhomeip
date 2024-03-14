@@ -23,6 +23,9 @@
 
 #include "cy_result.h"
 #include <platform/KeyValueStoreManager.h>
+#include "CHIPPlatformConfig.h"
+#include <lib/core/CHIPError.h>
+#include <platform/CHIPDeviceLayer.h>
 #include <lib/support/logging/CHIPLogging.h>
 
 #define FACTORY_ERASE 0
@@ -74,7 +77,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         {
             *read_bytes_size = static_cast<size_t>(actual_size);
         }
-
+        ChipLogError(DeviceLayer, "Failed to read from storage: key %s of bufferize:  %d, acutal size: %d, result: %ld", key, value_size, *read_bytes_size, result);
         return ConvertCyResultToChip(result);
     }
 
@@ -85,6 +88,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         {
             *read_bytes_size = actual_size; // The calling matter api expects this to always be set
         }
+        ChipLogProgress(DeviceLayer, "No data requested: key %s of bufferize:  %d, acutal size: %d", key, value_size, *read_bytes_size);
         return CHIP_NO_ERROR;
     }
 
@@ -99,6 +103,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
 
         if (local_value == NULL)
         {
+            ChipLogError(DeviceLayer, "Failed to allocate space for larget value size: key %s of bufferize:  %d, acutal size: %ld", key, value_size, actual_size);
             return CHIP_ERROR_INTERNAL;
         }
     }
@@ -121,6 +126,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
 
     if (result != CY_RSLT_SUCCESS)
     {
+        ChipLogDetail(DeviceLayer, "Succeeded to read from storage: key %s of bufferize:  %d, acutal size: %ld", key, value_size, size);
         return ConvertCyResultToChip(result);
     }
 
@@ -144,6 +150,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         // provided to us, as defined by value_size, then we return the too small error code.
         if ((actual_size - offset_bytes) > value_size)
         {
+            ChipLogError(DeviceLayer, "Buffer too small: key %s of bufferize:  %d, acutal size: %ld", key, value_size, actual_size);
             return CHIP_ERROR_BUFFER_TOO_SMALL;
         }
     }
@@ -159,6 +166,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
 {
     if (!init_success)
     {
+        ChipLogError(DeviceLayer, "_Put: Not initialized");
         return CHIP_ERROR_WELL_UNINITIALIZED;
     }
 
@@ -172,10 +180,12 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
     // between the two requirements.
     if (value != NULL && static_cast<size_t>(value_size) == 0)
     {
+        ChipLogProgress(DeviceLayer, "Writing: key without length %s", key);
         result = mtb_kvstore_write(&kvstore_obj, key, NULL, 0);
     }
     else
     {
+        ChipLogProgress(DeviceLayer, "Writing: key %s of value_size: %u", key, value_size);
         result = mtb_kvstore_write(&kvstore_obj, key, (uint8_t *) value, static_cast<size_t>(value_size));
     }
 
@@ -208,19 +218,31 @@ CHIP_ERROR KeyValueStoreManagerImpl::ConvertCyResultToChip(cy_rslt_t err) const
     switch (err)
     {
     case CY_RSLT_SUCCESS:
+        ChipLogDetail(DeviceLayer, "CY_RSLT_SUCCESS");
         return CHIP_NO_ERROR;
     case MTB_KVSTORE_BAD_PARAM_ERROR:
+        ChipLogError(DeviceLayer, "MTB_KVSTORE_BAD_PARAM_ERROR");
         return CHIP_ERROR_INVALID_ARGUMENT;
     case MTB_KVSTORE_STORAGE_FULL_ERROR: // Can't find a better CHIP error to translate this into
+        ChipLogError(DeviceLayer, "MTB_KVSTORE_STORAGE_FULL_ERROR");
+        return CHIP_ERROR_BUFFER_TOO_SMALL;
     case MTB_KVSTORE_MEM_ALLOC_ERROR:
+        ChipLogError(DeviceLayer, "MTB_KVSTORE_MEM_ALLOC_ERROR");
         return CHIP_ERROR_BUFFER_TOO_SMALL;
     case MTB_KVSTORE_INVALID_DATA_ERROR:
+        ChipLogError(DeviceLayer, "MTB_KVSTORE_INVALID_DATA_ERROR");
+        return CHIP_ERROR_INTEGRITY_CHECK_FAILED;
     case MTB_KVSTORE_ERASED_DATA_ERROR:
+        ChipLogError(DeviceLayer, "MTB_KVSTORE_ERASED_DATA_ERROR");
         return CHIP_ERROR_INTEGRITY_CHECK_FAILED;
     case MTB_KVSTORE_ITEM_NOT_FOUND_ERROR:
+        ChipLogError(DeviceLayer, "CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND");
         return CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND;
     case MTB_KVSTORE_ALIGNMENT_ERROR:
+        ChipLogError(DeviceLayer, "MTB_KVSTORE_ALIGNMENT_ERROR");
+        return CHIP_ERROR_INTERNAL;
     default:
+        ChipLogError(DeviceLayer, "Unknown error");
         return CHIP_ERROR_INTERNAL;
     }
     return CHIP_ERROR_INTERNAL;
