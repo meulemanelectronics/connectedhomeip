@@ -196,6 +196,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
 {
     if (!init_success)
     {
+        ChipLogError(DeviceLayer, "_Delete: Not initialized");
         return CHIP_ERROR_WELL_UNINITIALIZED;
     }
 
@@ -207,7 +208,12 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
     cy_rslt_t result = mtb_kvstore_read(&kvstore_obj, key, NULL, NULL);
     if (result == CY_RSLT_SUCCESS)
     {
+        ChipLogProgress(DeviceLayer, "_Delete: Delete existing key %s", key);
         result = mtb_kvstore_delete(&kvstore_obj, key);
+    }
+    else
+    {
+        ChipLogProgress(DeviceLayer, "_Delete: Error deleting key (probably did not exists) %s result %ld", key, result);
     }
 
     return ConvertCyResultToChip(result);
@@ -231,12 +237,12 @@ CHIP_ERROR KeyValueStoreManagerImpl::ConvertCyResultToChip(cy_rslt_t err) const
         return CHIP_ERROR_BUFFER_TOO_SMALL;
     case MTB_KVSTORE_INVALID_DATA_ERROR:
         ChipLogError(DeviceLayer, "MTB_KVSTORE_INVALID_DATA_ERROR");
-        return CHIP_ERROR_INTEGRITY_CHECK_FAILED;
+        return CHIP_ERROR_INVALID_ARGUMENT;
     case MTB_KVSTORE_ERASED_DATA_ERROR:
         ChipLogError(DeviceLayer, "MTB_KVSTORE_ERASED_DATA_ERROR");
         return CHIP_ERROR_INTEGRITY_CHECK_FAILED;
     case MTB_KVSTORE_ITEM_NOT_FOUND_ERROR:
-        ChipLogError(DeviceLayer, "CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND");
+        ChipLogError(DeviceLayer, "MTB_KVSTORE_ITEM_NOT_FOUND_ERROR");
         return CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND;
     case MTB_KVSTORE_ALIGNMENT_ERROR:
         ChipLogError(DeviceLayer, "MTB_KVSTORE_ALIGNMENT_ERROR");
