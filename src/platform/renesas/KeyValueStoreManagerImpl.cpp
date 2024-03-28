@@ -208,8 +208,8 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
     cy_rslt_t result = mtb_kvstore_read(&kvstore_obj, key, NULL, NULL);
     if (result == CY_RSLT_SUCCESS)
     {
-        ChipLogProgress(DeviceLayer, "_Delete: Delete existing key %s", key);
         result = mtb_kvstore_delete(&kvstore_obj, key);
+        ChipLogProgress(DeviceLayer, "_Delete: Delete existing key %s", key);
     }
     else
     {
