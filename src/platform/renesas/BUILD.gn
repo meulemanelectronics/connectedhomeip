@@ -37,6 +37,7 @@ static_library("renesas") {
     "DiagnosticDataProviderImpl.h",
     "KeyValueStoreManagerImpl.cpp",
     "KeyValueStoreManagerImpl.h",
+    "NetworkCommissioningDriver.cpp",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
     "SystemPlatformConfig.h",
