@@ -71,14 +71,19 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
     // If fail, return the failure code to the caller.
     // If success, but the value pointer is NULL, then the caller only wanted to know if the key
     // exists and/or the size of the key's value. Set read_bytes_size (if non-NULL) and then return.
-    if ((result != CY_RSLT_SUCCESS) || (value == NULL))
+    if (result != CY_RSLT_SUCCESS)
     {
+        ChipLogError(DeviceLayer, "Failed to read from storage: key %s of bufferize: %d, result: %lx", key, value_size, result);
+        return ConvertCyResultToChip(result);
+    }
+    if (value == NULL) 
+    {
+        ChipLogDetail(DeviceLayer, "Storage key %s exists, actual size: %ld", key, actual_size);
         if (read_bytes_size != nullptr)
         {
             *read_bytes_size = static_cast<size_t>(actual_size);
         }
-        ChipLogError(DeviceLayer, "Failed to read from storage: key %s of bufferize:  %d, acutal size: %d, result: %ld", key, value_size, *read_bytes_size, result);
-        return ConvertCyResultToChip(result);
+        return CHIP_NO_ERROR;
     }
 
     // If actual size is zero, there is no value to read, case this function can return.
@@ -88,7 +93,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         {
             *read_bytes_size = actual_size; // The calling matter api expects this to always be set
         }
-        ChipLogProgress(DeviceLayer, "No data requested: key %s of bufferize:  %d, acutal size: %d", key, value_size, *read_bytes_size);
+        ChipLogProgress(DeviceLayer, "No data requested: key %s of bufferize: %d, actual size: %ld", key, value_size, actual_size);
         return CHIP_NO_ERROR;
     }
 
@@ -103,8 +108,8 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
 
         if (local_value == NULL)
         {
-            ChipLogError(DeviceLayer, "Failed to allocate space for larget value size: key %s of bufferize:  %d, acutal size: %ld", key, value_size, actual_size);
-            return CHIP_ERROR_INTERNAL;
+            ChipLogError(DeviceLayer, "Failed to allocate space for larget value size: key %s of bufferize:  %d, actual size: %ld", key, value_size, actual_size);
+            return CHIP_ERROR_NO_MEMORY;
         }
     }
     else
@@ -126,7 +131,11 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
 
     if (result != CY_RSLT_SUCCESS)
     {
-        ChipLogDetail(DeviceLayer, "Succeeded to read from storage: key %s of bufferize:  %d, acutal size: %ld", key, value_size, size);
+        ChipLogDetail(DeviceLayer, "Succeeded to read from storage: key %s of bufferize:  %d, actual size: %ld", key, value_size, size);
+        if (local_value != value)
+        { 
+            free(local_value);
+        }
         return ConvertCyResultToChip(result);
     }
 
@@ -150,7 +159,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
         // provided to us, as defined by value_size, then we return the too small error code.
         if ((actual_size - offset_bytes) > value_size)
         {
-            ChipLogError(DeviceLayer, "Buffer too small: key %s of bufferize:  %d, acutal size: %ld", key, value_size, actual_size);
+            ChipLogError(DeviceLayer, "Buffer too small: key %s of bufferize:  %d, actual size: %ld", key, value_size, actual_size);
             return CHIP_ERROR_BUFFER_TOO_SMALL;
         }
     }
@@ -187,7 +196,8 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
     {
         ChipLogProgress(DeviceLayer, "Writing: key %s of value_size: %u", key, value_size);
         result = mtb_kvstore_write(&kvstore_obj, key, (uint8_t *) value, static_cast<size_t>(value_size));
-    }
+    }   
+    assert(result!= CY_RSLT_SUCCESS || mtb_kvstore_read(&kvstore_obj, key, nullptr, nullptr)==CY_RSLT_SUCCESS);
 
     return ConvertCyResultToChip(result);
 }
@@ -213,7 +223,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
     }
     else
     {
-        ChipLogProgress(DeviceLayer, "_Delete: Error deleting key (probably did not exists) %s result %ld", key, result);
+        ChipLogProgress(DeviceLayer, "_Delete: Error deleting key (probably did not exists) %s result %lx", key, result);
     }
 
     return ConvertCyResultToChip(result);
@@ -224,7 +234,6 @@ CHIP_ERROR KeyValueStoreManagerImpl::ConvertCyResultToChip(cy_rslt_t err) const
     switch (err)
     {
     case CY_RSLT_SUCCESS:
-        ChipLogDetail(DeviceLayer, "CY_RSLT_SUCCESS");
         return CHIP_NO_ERROR;
     case MTB_KVSTORE_BAD_PARAM_ERROR:
         ChipLogError(DeviceLayer, "MTB_KVSTORE_BAD_PARAM_ERROR");
