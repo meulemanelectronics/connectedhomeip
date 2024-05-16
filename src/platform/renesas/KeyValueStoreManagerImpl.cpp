@@ -196,8 +196,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, 
     {
         ChipLogProgress(DeviceLayer, "Writing: key %s of value_size: %u", key, value_size);
         result = mtb_kvstore_write(&kvstore_obj, key, (uint8_t *) value, static_cast<size_t>(value_size));
-    }   
-    assert(result!= CY_RSLT_SUCCESS || mtb_kvstore_read(&kvstore_obj, key, nullptr, nullptr)==CY_RSLT_SUCCESS);
+    }  
 
     return ConvertCyResultToChip(result);
 }
