@@ -41,6 +41,9 @@ public:
     CHIP_ERROR GetRebootCount(uint16_t & rebootCount) override;
     CHIP_ERROR GetBootReason(BootReasonType & bootReason) override;
 
+    CHIP_ERROR GetNetworkInterfaces(NetworkInterface ** netifpp);
+    void ReleaseNetworkInterfaces(NetworkInterface * netifp);
+
 };
 
 /**

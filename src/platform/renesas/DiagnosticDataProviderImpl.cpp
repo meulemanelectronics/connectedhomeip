@@ -93,6 +93,42 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetBootReason(BootReasonType & bootReason
     return err;
 }
 
+CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** netifpp)
+{
+    struct netif * net_interface;
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    NetworkInterface * ifp = new NetworkInterface();
+
+    net_interface = netif_find("en0");
+    if (net_interface)
+    {
+        ifp->name = CharSpan::fromCharString(net_interface->name);
+        ifp->isOperational = net_interface->flags & NETIF_FLAG_LINK_UP;
+        ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_ETHERNET;
+        ifp->offPremiseServicesReachableIPv4.SetNull();
+        ifp->offPremiseServicesReachableIPv6.SetNull();
+        ifp->hardwareAddress = ByteSpan(net_interface->hwaddr, net_interface->hwaddr_len);
+    }
+    else
+    {
+        err = CHIP_ERROR_NOT_FOUND;
+    }
+
+    *netifpp = ifp;
+
+    return err;
+}
+
+void DiagnosticDataProviderImpl::ReleaseNetworkInterfaces(NetworkInterface * netifp)
+{
+    while (netifp)
+    {
+        NetworkInterface * del = netifp;
+        netifp                 = netifp->Next;
+        delete del;
+    }
+}
+
 DiagnosticDataProvider & GetDiagnosticDataProviderImpl()
 {
     return DiagnosticDataProviderImpl::GetDefaultInstance();
