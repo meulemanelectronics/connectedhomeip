@@ -23,6 +23,8 @@
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
 #include <platform/DiagnosticDataProvider.h>
+#include <app/data-model/List.h>
+#include <lib/support/logging/CHIPLogging.h>
 #include <platform/renesas/DiagnosticDataProviderImpl.h>
 
 #include "FreeRTOS.h"
@@ -95,26 +97,78 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetBootReason(BootReasonType & bootReason
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** netifpp)
 {
-    struct netif * net_interface;
-    CHIP_ERROR err = CHIP_NO_ERROR;
-    NetworkInterface * ifp = new NetworkInterface();
 
-    net_interface = netif_find("en0");
-    if (net_interface)
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    NetworkInterface *head = nullptr;
+    NetworkInterface *tail = nullptr;
+
+   for (Inet::InterfaceIterator interfaceIterator; interfaceIterator.HasCurrent(); interfaceIterator.Next())
     {
+        char interfaceName[Inet::InterfaceId::kMaxIfNameLength];
+        interfaceIterator.GetInterfaceName(interfaceName, sizeof(interfaceName));
+        struct netif *net_interface = netif_find(interfaceName);
+        if (!net_interface)
+        {
+            continue;
+        }
+
+        NetworkInterface *ifp = new NetworkInterface();
+        if (ifp == nullptr)
+        {
+            err = CHIP_ERROR_NO_MEMORY;
+            break;
+        }
+
         ifp->name = CharSpan::fromCharString(net_interface->name);
-        ifp->isOperational = net_interface->flags & NETIF_FLAG_LINK_UP;
+        ifp->isOperational = (net_interface->flags & NETIF_FLAG_LINK_UP) != 0;
         ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_ETHERNET;
         ifp->offPremiseServicesReachableIPv4.SetNull();
         ifp->offPremiseServicesReachableIPv6.SetNull();
         ifp->hardwareAddress = ByteSpan(net_interface->hwaddr, net_interface->hwaddr_len);
+
+        size_t ipv6AddressCount = 0;
+
+        Inet::InterfaceAddressIterator interfaceAddressIterator;
+        while (interfaceAddressIterator.HasCurrent())
+        {
+            if (interfaceAddressIterator.GetInterfaceId() == interfaceIterator.GetInterfaceId())
+            {
+                Inet::IPAddress ipAddress;
+                if (interfaceAddressIterator.GetAddress(ipAddress) == CHIP_NO_ERROR)
+                {
+                    if (ipAddress.IsIPv6() && ipv6AddressCount < kMaxIPv6AddrCount)
+                    {
+                        memcpy(ifp->Ipv6AddressesBuffer[ipv6AddressCount], ipAddress.Addr, sizeof(ipAddress.Addr));
+                        ifp->Ipv6AddressSpans[ipv6AddressCount] = ByteSpan(ifp->Ipv6AddressesBuffer[ipv6AddressCount], sizeof(ipAddress.Addr));
+                        ipv6AddressCount++;
+                    }
+                }
+            }
+            interfaceAddressIterator.Next();
+        }
+
+        if (ipv6AddressCount > 0)
+        {
+            ifp->IPv6Addresses = chip::app::DataModel::List<chip::ByteSpan>(ifp->Ipv6AddressSpans, ipv6AddressCount);
+        }
+
+        if (head == nullptr)
+        {
+            head = ifp;
+        }
+        else
+        {
+            tail->Next = ifp;
+        }
+        tail = ifp;
     }
-    else
+
+    if (head == nullptr)
     {
         err = CHIP_ERROR_NOT_FOUND;
     }
 
-    *netifpp = ifp;
+    *netifpp = head;
 
     return err;
 }
