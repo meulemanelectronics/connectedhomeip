@@ -97,12 +97,10 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetBootReason(BootReasonType & bootReason
 
 CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** netifpp)
 {
-
     CHIP_ERROR err = CHIP_NO_ERROR;
     NetworkInterface *head = nullptr;
-    NetworkInterface *tail = nullptr;
 
-   for (Inet::InterfaceIterator interfaceIterator; interfaceIterator.HasCurrent(); interfaceIterator.Next())
+    for (Inet::InterfaceIterator interfaceIterator; interfaceIterator.HasCurrent(); interfaceIterator.Next())
     {
         char interfaceName[Inet::InterfaceId::kMaxIfNameLength];
         interfaceIterator.GetInterfaceName(interfaceName, sizeof(interfaceName));
@@ -152,15 +150,8 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
             ifp->IPv6Addresses = chip::app::DataModel::List<chip::ByteSpan>(ifp->Ipv6AddressSpans, ipv6AddressCount);
         }
 
-        if (head == nullptr)
-        {
-            head = ifp;
-        }
-        else
-        {
-            tail->Next = ifp;
-        }
-        tail = ifp;
+        ifp->Next = head;
+        head = ifp;
     }
 
     if (head == nullptr)
