@@ -195,6 +195,7 @@ DataVersion gLight2DataVersions[ArraySize(bridgedLightClusters)];
 DeviceOnOff Light1("Light 1", "Office");
 DeviceOnOff Light2("Light 2", "Office");
 
+/*
 DeviceTempSensor TempSensor1("TempSensor 1", "Office", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
 DeviceTempSensor TempSensor2("TempSensor 2", "Office", minMeasuredValue, maxMeasuredValue, initialMeasuredValue);
 
@@ -243,10 +244,10 @@ DECLARE_DYNAMIC_CLUSTER(Descriptor::Id, descriptorAttrs, nullptr, nullptr),
 DECLARE_DYNAMIC_ENDPOINT(bridgedPowerSourceEndpoint, bridgedPowerSourceClusters);
 
 DECLARE_DYNAMIC_ATTRIBUTE_LIST_BEGIN(tempSensorAttrs)
-DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MeasuredValue::Id, INT16S, 2, 0),        /* Measured Value */
-    DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MinMeasuredValue::Id, INT16S, 2, 0), /* Min Measured Value */
-    DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MaxMeasuredValue::Id, INT16S, 2, 0), /* Max Measured Value */
-    DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::FeatureMap::Id, BITMAP32, 4, 0),     /* FeatureMap */
+DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MeasuredValue::Id, INT16S, 2, 0),        
+    DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MinMeasuredValue::Id, INT16S, 2, 0), 
+    DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::MaxMeasuredValue::Id, INT16S, 2, 0), 
+    DECLARE_DYNAMIC_ATTRIBUTE(TemperatureMeasurement::Attributes::FeatureMap::Id, BITMAP32, 4, 0),     
     DECLARE_DYNAMIC_ATTRIBUTE_LIST_END();
 
 // ---------------------------------------------------------------------------
@@ -283,6 +284,7 @@ DataVersion gComposedDeviceDataVersions[ArraySize(bridgedComposedDeviceClusters)
 DataVersion gComposedTempSensor1DataVersions[ArraySize(bridgedTempSensorClusters)];
 DataVersion gComposedTempSensor2DataVersions[ArraySize(bridgedTempSensorClusters)];
 DataVersion gComposedPowerSourceDataVersions[ArraySize(bridgedPowerSourceClusters)];
+*/
 
 } // namespace
 
@@ -702,7 +704,7 @@ void runOnOffRoomAction(Room * room, bool actionOn, EndpointId endpointId, uint1
         EventNumber eventNumber;
         chip::app::LogEvent(event, endpointId, eventNumber);
     }
-
+/*
     // Check and run the action for ActionLight1 - ActionLight4
     if (room->getName().compare(ActionLight1.GetLocation()) == 0)
     {
@@ -720,7 +722,7 @@ void runOnOffRoomAction(Room * room, bool actionOn, EndpointId endpointId, uint1
     {
         ActionLight4.SetOnOff(actionOn);
     }
-
+*/
     if (hasInvokeID)
     {
         Actions::Events::StateChanged::Type event{ actionID, invokeID, Actions::ActionStateEnum::kInactive };
@@ -732,6 +734,7 @@ void runOnOffRoomAction(Room * room, bool actionOn, EndpointId endpointId, uint1
 bool emberAfActionsClusterInstantActionCallback(app::CommandHandler * commandObj, const app::ConcreteCommandPath & commandPath,
                                                 const Actions::Commands::InstantAction::DecodableType & commandData)
 {
+/*
     bool hasInvokeID      = false;
     uint32_t invokeID     = 0;
     EndpointId endpointID = commandPath.mEndpointId;
@@ -764,7 +767,7 @@ bool emberAfActionsClusterInstantActionCallback(app::CommandHandler * commandObj
         commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::Success);
         return true;
     }
-
+*/
     commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::NotFound);
     return true;
 }
@@ -891,7 +894,7 @@ void * bridge_polling_thread(void * context)
                     Light2.Toggle();
                 }
             }
-            if (ch == 't')
+/*            if (ch == 't')
             {
                 // TC-BR-4 step 1g, change the state of the temperature sensors
                 TempSensor1.SetMeasuredValue(static_cast<int16_t>(TempSensor1.GetMeasuredValue() + oneDegree));
@@ -951,7 +954,8 @@ void * bridge_polling_thread(void * context)
                 // TC-BRBINFO-2.2 step 2 "Set reachable to true"
                 TempSensor1.SetReachable(true);
             }
-            continue;
+ */
+           continue;
         }
 
         // Sleep to avoid tight loop reading commands
@@ -972,7 +976,7 @@ int main(int argc, char * argv[])
 
     Light1.SetChangeCallback(&HandleDeviceOnOffStatusChanged);
     Light2.SetChangeCallback(&HandleDeviceOnOffStatusChanged);
-
+/*
     TempSensor1.SetReachable(true);
     TempSensor1.SetReachable(true);
 
@@ -1003,6 +1007,7 @@ int main(int argc, char * argv[])
     ComposedTempSensor1.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
     ComposedTempSensor2.SetChangeCallback(&HandleDeviceTempSensorStatusChanged);
     ComposedPowerSource.SetChangeCallback(&HandleDevicePowerSourceStatusChanged);
+*/
 
     if (ChipLinuxAppInit(argc, argv) != 0)
     {
@@ -1033,7 +1038,7 @@ int main(int argc, char * argv[])
     // Disable last fixed endpoint, which is used as a placeholder for all of the
     // supported clusters so that ZAP will generated the requisite code.
     emberAfEndpointEnableDisable(emberAfEndpointFromIndex(static_cast<uint16_t>(emberAfFixedEndpointCount() - 1)), false);
-
+/*
     // Add light 1 -> will be mapped to ZCL endpoints 3
     AddDeviceEndpoint(&Light1, &bridgedLightEndpoint, Span<const EmberAfDeviceType>(gBridgedOnOffDeviceTypes),
                       Span<DataVersion>(gLight1DataVersions), 1);
@@ -1073,7 +1078,7 @@ int main(int argc, char * argv[])
     gActions.push_back(&action1);
     gActions.push_back(&action2);
     gActions.push_back(&action3);
-
+*/
     {
         pthread_t poll_thread;
         int res = pthread_create(&poll_thread, nullptr, bridge_polling_thread, nullptr);
