@@ -24,7 +24,6 @@
 
 #include <platform/DiagnosticDataProvider.h>
 #include <app/data-model/List.h>
-#include <lib/support/logging/CHIPLogging.h>
 #include <platform/renesas/DiagnosticDataProviderImpl.h>
 
 #include "FreeRTOS.h"
@@ -102,27 +101,60 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
 
     for (Inet::InterfaceIterator interfaceIterator; interfaceIterator.HasCurrent(); interfaceIterator.Next())
     {
-        char interfaceName[Inet::InterfaceId::kMaxIfNameLength];
-        interfaceIterator.GetInterfaceName(interfaceName, sizeof(interfaceName));
-        struct netif *net_interface = netif_find(interfaceName);
-        if (!net_interface)
-        {
-            continue;
-        }
-
         NetworkInterface *ifp = new NetworkInterface();
+        interfaceIterator.GetInterfaceName(ifp->Name, Inet::InterfaceId::kMaxIfNameLength);
+        ifp->name          = CharSpan::fromCharString(ifp->Name);
         if (ifp == nullptr)
         {
             err = CHIP_ERROR_NO_MEMORY;
             break;
         }
 
-        ifp->name = CharSpan::fromCharString(net_interface->name);
-        ifp->isOperational = (net_interface->flags & NETIF_FLAG_LINK_UP) != 0;
-        ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_ETHERNET;
+        ifp->name = CharSpan::fromCharString(ifp->Name);
+        ifp->isOperational = interfaceIterator.IsUp();
+
+        Inet::InterfaceType interfaceType;
+        if (interfaceIterator.GetInterfaceType(interfaceType) == CHIP_NO_ERROR)
+        {
+            switch (interfaceType)
+            {
+            case Inet::InterfaceType::Unknown:
+                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_UNSPECIFIED;
+                break;
+            case Inet::InterfaceType::WiFi:
+                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_WI_FI;
+                break;
+            case Inet::InterfaceType::Ethernet:
+                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_ETHERNET;
+                break;
+            case Inet::InterfaceType::Thread:
+                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_THREAD;
+                break;
+            case Inet::InterfaceType::Cellular:
+                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_CELLULAR;
+                break;
+            }
+        }
+        else
+        {
+            ChipLogError(DeviceLayer, "Failed to get interface type");
+        }
+
         ifp->offPremiseServicesReachableIPv4.SetNull();
         ifp->offPremiseServicesReachableIPv6.SetNull();
-        ifp->hardwareAddress = ByteSpan(net_interface->hwaddr, net_interface->hwaddr_len);
+
+        uint8_t addressSize;
+
+        err = interfaceIterator.GetHardwareAddress(ifp->MacAddress, addressSize, sizeof(ifp->MacAddress));
+
+        if (err != CHIP_NO_ERROR)
+        {
+            ChipLogError(DeviceLayer, "Failed to get network hardware address");
+        }
+        else
+        {
+            ifp->hardwareAddress = ByteSpan(ifp->MacAddress, addressSize);
+        }
 
         size_t ipv6AddressCount = 0;
 
