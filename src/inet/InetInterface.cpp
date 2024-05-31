@@ -260,7 +260,7 @@ CHIP_ERROR InterfaceIterator::GetInterfaceType(InterfaceType & type)
     if(!mCurNetif)
         return CHIP_ERROR_INCORRECT_STATE;
 
-    if (mCurNetif->flags & NETIF_FLAG_ETHARP)
+    if (netif_is_flag_set(mCurNetif, NETIF_FLAG_ETHARP))
     {
         type = InterfaceType::Ethernet;
     }
