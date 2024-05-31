@@ -255,7 +255,21 @@ bool InterfaceIterator::HasBroadcastAddress()
 
 CHIP_ERROR InterfaceIterator::GetInterfaceType(InterfaceType & type)
 {
-    return CHIP_ERROR_NOT_IMPLEMENTED;
+    VerifyOrReturnError(HasCurrent(), CHIP_ERROR_INCORRECT_STATE);
+
+    if(!mCurNetif)
+        return CHIP_ERROR_INCORRECT_STATE;
+
+    if (mCurNetif->flags & NETIF_FLAG_ETHARP)
+    {
+        type = InterfaceType::Ethernet;
+    }
+    else
+    {
+        type = InterfaceType::WiFi;
+    }
+
+    return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR InterfaceIterator::GetHardwareAddress(uint8_t * addressBuffer, uint8_t & addressSize, uint8_t addressBufferSize)
