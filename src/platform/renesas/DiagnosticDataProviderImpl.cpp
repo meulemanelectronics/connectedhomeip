@@ -103,7 +103,6 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
     {
         NetworkInterface *ifp = new NetworkInterface();
         interfaceIterator.GetInterfaceName(ifp->Name, Inet::InterfaceId::kMaxIfNameLength);
-        ifp->name          = CharSpan::fromCharString(ifp->Name);
         if (ifp == nullptr)
         {
             err = CHIP_ERROR_NO_MEMORY;
@@ -118,48 +117,48 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
         {
             switch (interfaceType)
             {
-            case Inet::InterfaceType::Unknown:
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_UNSPECIFIED;
-                break;
-            case Inet::InterfaceType::WiFi:
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_WI_FI;
-                break;
-            case Inet::InterfaceType::Ethernet:
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_ETHERNET;
-                break;
-            case Inet::InterfaceType::Thread:
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_THREAD;
-                break;
-            case Inet::InterfaceType::Cellular:
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_CELLULAR;
-                break;
+                case Inet::InterfaceType::Unknown:
+                    ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_UNSPECIFIED;
+                    break;
+                case Inet::InterfaceType::WiFi:
+                    ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_WI_FI;
+                    break;
+                case Inet::InterfaceType::Ethernet:
+                    ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_ETHERNET;
+                    break;
+                case Inet::InterfaceType::Thread:
+                    ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_THREAD;
+                    break;
+                case Inet::InterfaceType::Cellular:
+                    ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_CELLULAR;
+                    break;
             }
         }
         else
         {
             ChipLogError(DeviceLayer, "Failed to get interface type");
+            ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_UNSPECIFIED;
         }
-
         ifp->offPremiseServicesReachableIPv4.SetNull();
         ifp->offPremiseServicesReachableIPv6.SetNull();
 
-        uint8_t addressSize;
-
+        uint8_t addressSize = 0;
         err = interfaceIterator.GetHardwareAddress(ifp->MacAddress, addressSize, sizeof(ifp->MacAddress));
 
-        if (err != CHIP_NO_ERROR)
+        if (err == CHIP_NO_ERROR)
         {
-            ChipLogError(DeviceLayer, "Failed to get network hardware address");
+            ifp->hardwareAddress = ByteSpan(ifp->MacAddress, addressSize);
         }
         else
         {
-            ifp->hardwareAddress = ByteSpan(ifp->MacAddress, addressSize);
+            ChipLogError(DeviceLayer, "Failed to get network hardware address");
+            ifp->hardwareAddress = ByteSpan();
         }
 
         size_t ipv6AddressCount = 0;
 
         Inet::InterfaceAddressIterator interfaceAddressIterator;
-        while (interfaceAddressIterator.HasCurrent())
+        for(Inet::InterfaceAddressIterator interfaceAddressIterator; interfaceAddressIterator.HasCurrent(); interfaceAddressIterator.Next())
         {
             if (interfaceAddressIterator.GetInterfaceId() == interfaceIterator.GetInterfaceId())
             {
@@ -174,7 +173,6 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
                     }
                 }
             }
-            interfaceAddressIterator.Next();
         }
 
         if (ipv6AddressCount > 0)
