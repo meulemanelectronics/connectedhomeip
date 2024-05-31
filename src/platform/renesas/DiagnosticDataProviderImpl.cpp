@@ -186,14 +186,21 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
         }
 
     }
-    if (head == nullptr)
+
+    if (err!=CHIP_NO_ERROR)
     {
-        err = CHIP_ERROR_NOT_FOUND;
+       ReleaseNetworkInterfaces(head);
+       return err;
     }
-
-    *netifpp = head;
-
-    return err;
+    else if (head == nullptr)
+    {
+       return CHIP_ERROR_NOT_FOUND;
+    }
+    else
+    {
+       *netifpp = head;
+       return CHIP_NO_ERROR;
+    }
 }
 
 void DiagnosticDataProviderImpl::ReleaseNetworkInterfaces(NetworkInterface * netifp)
