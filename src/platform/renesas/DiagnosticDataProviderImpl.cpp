@@ -74,7 +74,6 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetRebootCount(uint16_t & rebootCount)
     CHIP_ERROR err = ConfigurationMgr().GetRebootCount(count);
     if (err == CHIP_NO_ERROR)
     {
-        // If the value overflows, return UINT16 max value to provide best-effort number.
         rebootCount = static_cast<uint16_t>(count <= UINT16_MAX ? count : UINT16_MAX);
     }
     return err;
