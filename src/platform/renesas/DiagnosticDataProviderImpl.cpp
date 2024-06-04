@@ -152,7 +152,6 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
 
             size_t ipv6AddressCount = 0;
 
-            Inet::InterfaceAddressIterator interfaceAddressIterator;
             for(Inet::InterfaceAddressIterator interfaceAddressIterator; interfaceAddressIterator.HasCurrent(); interfaceAddressIterator.Next())
             {
                 if (interfaceAddressIterator.GetInterfaceId() == interfaceIterator.GetInterfaceId())
