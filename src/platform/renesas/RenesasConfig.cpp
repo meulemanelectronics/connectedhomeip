@@ -46,14 +46,16 @@ CHIP_ERROR RenesasConfig::ReadConfigValueStr(Key key, char * buf, size_t bufSize
     return ReadConfigValueBin(key, buf, bufSize, outLen);
 }
 
-CHIP_ERROR RenesasConfig::ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSize, size_t & outLen)
-{
-    return ReadConfigValueBin(key, static_cast<void *>(buf), bufSize, outLen);
-}
-
 CHIP_ERROR RenesasConfig::ReadConfigValueBin(Key key, void * buf, size_t bufSize, size_t & outLen)
 {
-    return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+    char key_str[MTB_KVSTORE_MAX_KEY_SIZE] = { 0 };
+    snprintf(key_str, sizeof(key_str), "%08x", static_cast<unsigned long>(key));
+    CHIP_ERROR err = PersistedStorage::KeyValueStoreMgr().Get(key_str, buf, bufSize, &outLen);
+    if (err == CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND)
+    {
+        err = CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
+    }
+    return err;
 }
 
 template CHIP_ERROR RenesasConfig::ReadConfigValue(Key key, bool & val);
@@ -87,11 +89,9 @@ CHIP_ERROR RenesasConfig::WriteConfigValueBin(Key key, const uint8_t * data, siz
 
 CHIP_ERROR RenesasConfig::WriteConfigValueBin(Key key, const void * data, size_t dataLen)
 {
-    /* Skip writing because the write API reports error result for zero length data. */
-    if (dataLen == 0)
-        return CHIP_NO_ERROR;
-
-    return CHIP_NO_ERROR;
+    char key_str[MTB_KVSTORE_MAX_KEY_SIZE] = { 0 };
+    snprintf(key_str, sizeof(key_str), "%08x", static_cast<unsigned long>(key));
+    return PersistedStorage::KeyValueStoreMgr().Put(key_str, data, dataLen);
 }
 
 CHIP_ERROR RenesasConfig::ClearConfigValue(Key key)
@@ -101,8 +101,14 @@ CHIP_ERROR RenesasConfig::ClearConfigValue(Key key)
 
 bool RenesasConfig::ConfigValueExists(Key key)
 {
-    uint8_t val;
-    return ChipError::IsSuccess(ReadConfigValue(key, val));
+    char key_str[MTB_KVSTORE_MAX_KEY_SIZE] = { 0 };
+    snprintf(key_str, sizeof(key_str), "%08x", static_cast<unsigned long>(key));
+    if (PersistedStorage::KeyValueStoreMgr().Get(key_str, NULL, 0) == CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 CHIP_ERROR RenesasConfig::FactoryResetConfig(void)

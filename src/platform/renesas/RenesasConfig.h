@@ -107,7 +107,6 @@ public:
     static CHIP_ERROR ReadConfigValue(Key key, T & val);
 
     static CHIP_ERROR ReadConfigValueStr(Key key, char * buf, size_t bufSize, size_t & outLen);
-    static CHIP_ERROR ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSize, size_t & outLen);
     static CHIP_ERROR ReadConfigValueBin(Key key, void * buf, size_t bufSize, size_t & outLen);
     template <typename T>
     static CHIP_ERROR WriteConfigValue(Key key, T val);
