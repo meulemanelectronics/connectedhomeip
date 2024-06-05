@@ -46,11 +46,6 @@ CHIP_ERROR RenesasConfig::ReadConfigValueStr(Key key, char * buf, size_t bufSize
     return ReadConfigValueBin(key, buf, bufSize, outLen);
 }
 
-CHIP_ERROR RenesasConfig::ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSize, size_t & outLen)
-{
-    return ReadConfigValueBin(key, static_cast<void *>(buf), bufSize, outLen);
-}
-
 CHIP_ERROR RenesasConfig::ReadConfigValueBin(Key key, void * buf, size_t bufSize, size_t & outLen)
 {
     return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
@@ -87,10 +82,6 @@ CHIP_ERROR RenesasConfig::WriteConfigValueBin(Key key, const uint8_t * data, siz
 
 CHIP_ERROR RenesasConfig::WriteConfigValueBin(Key key, const void * data, size_t dataLen)
 {
-    /* Skip writing because the write API reports error result for zero length data. */
-    if (dataLen == 0)
-        return CHIP_NO_ERROR;
-
     return CHIP_NO_ERROR;
 }
 
@@ -101,8 +92,7 @@ CHIP_ERROR RenesasConfig::ClearConfigValue(Key key)
 
 bool RenesasConfig::ConfigValueExists(Key key)
 {
-    uint8_t val;
-    return ChipError::IsSuccess(ReadConfigValue(key, val));
+    return true;
 }
 
 CHIP_ERROR RenesasConfig::FactoryResetConfig(void)
