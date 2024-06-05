@@ -48,14 +48,7 @@ CHIP_ERROR RenesasConfig::ReadConfigValueStr(Key key, char * buf, size_t bufSize
 
 CHIP_ERROR RenesasConfig::ReadConfigValueBin(Key key, void * buf, size_t bufSize, size_t & outLen)
 {
-    char key_str[MTB_KVSTORE_MAX_KEY_SIZE] = { 0 };
-    snprintf(key_str, sizeof(key_str), "%08x", static_cast<unsigned long>(key));
-    CHIP_ERROR err = PersistedStorage::KeyValueStoreMgr().Get(key_str, buf, bufSize, &outLen);
-    if (err == CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND)
-    {
-        err = CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
-    }
-    return err;
+    return CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND;
 }
 
 template CHIP_ERROR RenesasConfig::ReadConfigValue(Key key, bool & val);
@@ -89,9 +82,7 @@ CHIP_ERROR RenesasConfig::WriteConfigValueBin(Key key, const uint8_t * data, siz
 
 CHIP_ERROR RenesasConfig::WriteConfigValueBin(Key key, const void * data, size_t dataLen)
 {
-    char key_str[MTB_KVSTORE_MAX_KEY_SIZE] = { 0 };
-    snprintf(key_str, sizeof(key_str), "%08x", static_cast<unsigned long>(key));
-    return PersistedStorage::KeyValueStoreMgr().Put(key_str, data, dataLen);
+    return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR RenesasConfig::ClearConfigValue(Key key)
@@ -101,13 +92,6 @@ CHIP_ERROR RenesasConfig::ClearConfigValue(Key key)
 
 bool RenesasConfig::ConfigValueExists(Key key)
 {
-    char key_str[MTB_KVSTORE_MAX_KEY_SIZE] = { 0 };
-    snprintf(key_str, sizeof(key_str), "%08x", static_cast<unsigned long>(key));
-    if (PersistedStorage::KeyValueStoreMgr().Get(key_str, NULL, 0) == CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND)
-    {
-        return false;
-    }
-
     return true;
 }
 

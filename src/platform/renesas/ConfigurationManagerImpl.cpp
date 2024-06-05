@@ -27,6 +27,7 @@
 #include <platform/ConfigurationManager.h>
 #include <platform/DiagnosticDataProvider.h>
 #include <platform/KeyValueStoreManager.h>
+#include <lib/support/DefaultStorageKeyAllocator.h>
 #include "lwip/netif.h"
 
 namespace chip {
@@ -44,26 +45,11 @@ CHIP_ERROR ConfigurationManagerImpl::Init()
 {
     CHIP_ERROR err;
     uint32_t rebootCount;
-    if (RenesasConfig::ConfigValueExists(RenesasConfig::kConfigKey_RebootCount))
-    {
-        err = GetRebootCount(rebootCount);
-        SuccessOrExit(err);
+    err = GetRebootCount(rebootCount);
+    SuccessOrExit(err);
 
-        err = StoreRebootCount(rebootCount + 1);
-        SuccessOrExit(err);
-    }
-    else
-    {
-        // The first boot after factory reset of the Node.
-        err = StoreRebootCount(1);
-        SuccessOrExit(err);
-    }
-
-    if (!RenesasConfig::ConfigValueExists(RenesasConfig::kConfigKey_BootReason))
-    {
-        err = StoreBootReason(to_underlying(BootReasonType::kUnspecified));
-        SuccessOrExit(err);
-    }
+    err = StoreRebootCount(rebootCount + 1);
+    SuccessOrExit(err);
 
     // Initialize the generic implementation base class.
     err = Internal::GenericConfigurationManagerImpl<RenesasConfig>::Init();
@@ -75,12 +61,32 @@ exit:
 
 CHIP_ERROR ConfigurationManagerImpl::GetRebootCount(uint32_t & rebootCount)
 {
-    return ReadConfigValue(RenesasConfig::kConfigKey_RebootCount, rebootCount);
+    size_t readBytesSize;
+
+    auto err = PersistedStorage::KeyValueStoreMgr().Get(
+        DefaultStorageKeyAllocator::AttributeValue(0, chip::app::Clusters::GeneralDiagnostics::Id,
+        chip::app::Clusters::GeneralDiagnostics::Attributes::RebootCount::Id).KeyName(), &rebootCount,
+        sizeof(rebootCount), &readBytesSize);
+
+    if (err == CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND)
+    {
+        rebootCount = 0;
+        return CHIP_NO_ERROR;
+    }
+    else
+    {
+        return err;
+    }
 }
 
 CHIP_ERROR ConfigurationManagerImpl::StoreRebootCount(uint32_t rebootCount)
 {
-    return WriteConfigValue(RenesasConfig::kConfigKey_RebootCount, rebootCount);
+    auto err = PersistedStorage::KeyValueStoreMgr().Put(
+        DefaultStorageKeyAllocator::AttributeValue(0, chip::app::Clusters::GeneralDiagnostics::Id,
+        chip::app::Clusters::GeneralDiagnostics::Attributes::RebootCount::Id).KeyName(), &rebootCount,
+        sizeof(rebootCount));
+
+    return err;
 }
 
 CHIP_ERROR ConfigurationManagerImpl::GetBootReason(uint32_t & bootReason)
