@@ -1,7 +1,6 @@
 /*
  *
- *    Copyright (c) 2020 Project CHIP Authors
- *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2022 Project CHIP Authors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,17 +15,14 @@
  *    limitations under the License.
  */
 
-/**
- * @file
- * Platform-specific configuration overrides for the CHIP system layer.
- *
- */
+#include <lib/support/TimeUtils.h>
 
-#pragma once
+namespace chip {
+namespace System {
+namespace Clock {
 
-// ==================== Platform Adaptations ====================
-#define CHIP_SYSTEM_CONFIG_PLATFORM_PROVIDES_TIME 1
-#define CHIP_SYSTEM_CONFIG_EVENT_OBJECT_TYPE const struct ::chip::DeviceLayer::ChipDeviceEvent *
-#define CHIP_SYSTEM_CONFIG_PACKETBUFFER_POOL_SIZE 0
+CHIP_ERROR InitClock_RealTime();
 
-// ========== Platform-specific Configuration Overrides =========
+} // namespace Clock
+} // namespace System
+} // namespace chip
