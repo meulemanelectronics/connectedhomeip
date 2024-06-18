@@ -23,11 +23,12 @@
  *          time/clock functions based on the FreeRTOS tick counter.
  */
 /* this file behaves like a config.h, comes first */
+#include <time.h>
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
-#include <lib/support/TimeUtils.h>
-
+#include "time_zone.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
 namespace chip {
 namespace System {
@@ -40,8 +41,6 @@ ClockImpl gClockImpl;
 namespace {
 
 constexpr uint32_t kTicksOverflowShift = (configUSE_16_BIT_TICKS) ? 16 : 32;
-
-uint64_t sBootTimeUS = 0;
 
 #ifdef __CORTEX_M
 BaseType_t sNumOfOverflows;
@@ -119,48 +118,35 @@ uint64_t GetClock_MonotonicHiRes(void)
 
 CHIP_ERROR ClockImpl::GetClock_RealTime(Clock::Microseconds64 & aCurTime)
 {
-    if (sBootTimeUS == 0)
+    struct m_timeval tv;
+    if (clock_gettime(&tv) == 0)
     {
-        return CHIP_ERROR_REAL_TIME_NOT_SYNCED;
+        aCurTime = std::chrono::seconds(tv.tv_sec) + std::chrono::microseconds(tv.tv_usec);
+        return CHIP_NO_ERROR;
     }
-    aCurTime = Clock::Microseconds64(sBootTimeUS + GetClock_Monotonic());
-    return CHIP_NO_ERROR;
+    return CHIP_ERROR_REAL_TIME_NOT_SYNCED;
+
 }
 
 CHIP_ERROR ClockImpl::GetClock_RealTimeMS(Clock::Milliseconds64 & aCurTime)
 {
-    if (sBootTimeUS == 0)
+    Clock::Microseconds64 time_us;
+    auto result = GetClock_RealTime(time_us);
+    if (result == CHIP_NO_ERROR)
     {
-        return CHIP_ERROR_REAL_TIME_NOT_SYNCED;
+        aCurTime = std::chrono::duration_cast<Clock::Milliseconds64>(time_us);
     }
-    aCurTime = Clock::Milliseconds64((sBootTimeUS + GetClock_Monotonic()) / 1000);
-    return CHIP_NO_ERROR;
+    return result;
 }
 
 CHIP_ERROR ClockImpl::SetClock_RealTime(Clock::Microseconds64 aNewCurTime)
 {
-    uint64_t timeSinceBootUS = GetClock_Monotonic();
-    if (aNewCurTime.count() > timeSinceBootUS)
-    {
-        sBootTimeUS = aNewCurTime.count() - timeSinceBootUS;
-    }
-    else
-    {
-        sBootTimeUS = 0;
-    }
-    return CHIP_NO_ERROR;
+    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
 }
 
 CHIP_ERROR InitClock_RealTime()
 {
-    Clock::Microseconds64 curTime =
-        Clock::Microseconds64((static_cast<uint64_t>(CHIP_SYSTEM_CONFIG_VALID_REAL_TIME_THRESHOLD) * UINT64_C(1000000)));
-    // Use CHIP_SYSTEM_CONFIG_VALID_REAL_TIME_THRESHOLD as the initial value of RealTime.
-    // Then the RealTime obtained from GetClock_RealTime will be always valid.
-    //
-    // TODO(19081): This is broken because it causes the platform to report
-    //              that it does have wall clock time when it actually doesn't.
-    return System::SystemClock().SetClock_RealTime(curTime);
+    return CHIP_NO_ERROR;
 }
 
 } // namespace Clock
