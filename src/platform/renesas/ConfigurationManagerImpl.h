@@ -42,6 +42,8 @@ public:
     CHIP_ERROR StoreRebootCount(uint32_t rebootCount) override;
     CHIP_ERROR GetBootReason(uint32_t & bootReason) override;
     CHIP_ERROR StoreBootReason(uint32_t bootReason) override;
+    CHIP_ERROR GetCountryCode(char * buf, size_t bufSize, size_t & codeLen) override;
+    CHIP_ERROR StoreCountryCode(const char * code, size_t codeLen) override;
     void RegisterNetif(struct netif* netif);
 
     CHIP_ERROR GetPrimaryWiFiMACAddress(uint8_t * buf) override;
