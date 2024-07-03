@@ -89,6 +89,34 @@ CHIP_ERROR ConfigurationManagerImpl::StoreRebootCount(uint32_t rebootCount)
     return err;
 }
 
+CHIP_ERROR ConfigurationManagerImpl::GetCountryCode(char * buf, size_t bufSize, size_t & codeLen)
+{
+    size_t readBytesSize;
+    auto err = PersistedStorage::KeyValueStoreMgr().Get(DefaultStorageKeyAllocator::AttributeValue(
+        0, chip::app::Clusters::BasicInformation::Id,
+        chip::app::Clusters::BasicInformation::Attributes::Location::Id).KeyName(), buf, bufSize, &readBytesSize);
+
+    if (err == CHIP_ERROR_PERSISTED_STORAGE_VALUE_NOT_FOUND)
+    {
+        codeLen = 0;
+        return CHIP_NO_ERROR;
+    }
+    else if (err == CHIP_NO_ERROR)
+    {
+        codeLen = readBytesSize;
+    }
+
+    return err;
+}
+
+CHIP_ERROR ConfigurationManagerImpl::StoreCountryCode(const char * code, size_t codeLen)
+{
+    auto err = PersistedStorage::KeyValueStoreMgr().Put(DefaultStorageKeyAllocator::AttributeValue(
+        0, chip::app::Clusters::BasicInformation::Id,
+        chip::app::Clusters::BasicInformation::Attributes::Location::Id).KeyName(), code, codeLen);
+    return err;
+}
+
 CHIP_ERROR ConfigurationManagerImpl::GetBootReason(uint32_t & bootReason)
 {
     return ReadConfigValue(RenesasConfig::kConfigKey_BootReason, bootReason);
