@@ -41,6 +41,10 @@ ConfigurationManagerImpl & ConfigurationManagerImpl::GetDefaultInstance()
     return sInstance;
 }
 
+ConfigurationManagerImpl::ConfigurationManagerImpl()
+    : m_provider(nullptr)
+{ }
+
 CHIP_ERROR ConfigurationManagerImpl::Init()
 {
     CHIP_ERROR err;
@@ -131,11 +135,6 @@ CHIP_ERROR ConfigurationManagerImpl::GetBootReason(uint32_t & bootReason)
 CHIP_ERROR ConfigurationManagerImpl::StoreBootReason(uint32_t bootReason)
 {
     return WriteConfigValue(RenesasConfig::kConfigKey_BootReason, bootReason);
-}
-
-void ConfigurationManagerImpl::RegisterNetif(struct netif* netif)
-{
-        m_netif = netif;
 }
 
 bool ConfigurationManagerImpl::CanFactoryReset(void)
@@ -230,19 +229,42 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
     // Implement factory reset
 }
 
-ConfigurationManager & ConfigurationMgrImpl()
+void ConfigurationManagerImpl::RegisterInformationProvider(ConfigurationInformationProvider& provider)
 {
-    return ConfigurationManagerImpl::GetDefaultInstance();
+    assert(m_provider == nullptr);
+    m_provider = &provider;
 }
 
 CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
 {
-    if (m_netif != nullptr && buf != nullptr)
+    if (m_provider != nullptr)
     {
-        memcpy(buf, m_netif->hwaddr, m_netif->hwaddr_len);
-        return CHIP_NO_ERROR;
+        return m_provider->GetMacAddress(buf);
     }
-    return CHIP_ERROR_NOT_IMPLEMENTED;
+    return CHIP_ERROR_INTERNAL;
+}
+
+CHIP_ERROR ConfigurationManagerImpl::GetSoftwareVersion(uint32_t & softwareVer)
+{
+    if (m_provider != nullptr)
+    {
+        return m_provider->GetSoftwareVersion(softwareVer);
+    }
+    return CHIP_ERROR_INTERNAL;
+}
+
+CHIP_ERROR ConfigurationManagerImpl::GetSoftwareVersionString(char * buf, size_t bufSize)
+{
+    if (m_provider != nullptr)
+    {
+        return m_provider->GetSoftwareVersionString(buf, bufSize);
+    }
+    return CHIP_ERROR_INTERNAL;
+}
+
+ConfigurationManager & ConfigurationMgrImpl()
+{
+    return ConfigurationManagerImpl::GetDefaultInstance();
 }
 
 } // namespace DeviceLayer
