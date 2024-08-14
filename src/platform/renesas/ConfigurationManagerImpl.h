@@ -24,6 +24,7 @@
 #pragma once
 
 #include <platform/internal/GenericConfigurationManagerImpl.h>
+#include "ConfigurationInformationProvider.h"
 
 #include "RenesasConfig.h"
 struct netif;
@@ -45,12 +46,12 @@ public:
     CHIP_ERROR GetCountryCode(char * buf, size_t bufSize, size_t & codeLen) override;
     CHIP_ERROR StoreCountryCode(const char * code, size_t codeLen) override;
     CHIP_ERROR GetLocationCapability(uint8_t & location) override;
-    void RegisterNetif(struct netif* netif);
-
     CHIP_ERROR GetPrimaryWiFiMACAddress(uint8_t * buf) override;
-
+    CHIP_ERROR GetSoftwareVersion(uint32_t & softwareVer) override;
+    CHIP_ERROR GetSoftwareVersionString(char * buf, size_t bufSize) override;
+    void RegisterInformationProvider(ConfigurationInformationProvider& provider);
 private:
-
+    ConfigurationManagerImpl();
     CHIP_ERROR Init(void) override;
     bool CanFactoryReset(void) override;
     void InitiateFactoryReset(void) override;
@@ -73,7 +74,7 @@ private:
 
     static void DoFactoryReset(intptr_t arg);
 
-    struct netif* m_netif;
+    ConfigurationInformationProvider* m_provider;
 };
 
 /**

@@ -29,8 +29,6 @@ static_library("renesas") {
     "RenesasConfig.h",
     "ConfigurationManagerImpl.cpp",
     "ConfigurationManagerImpl.h",
-    "ConfigurationManagerNetif.cpp",
-    "ConfigurationManagerNetif.h",
     "ConnectivityManagerImpl.cpp",
     "ConnectivityManagerImpl.h",
     "DiagnosticDataProviderImpl.cpp",
