@@ -16,7 +16,7 @@ import("//build_overrides/chip.gni")
 import("${chip_root}/src/ble/ble.gni")
 
 declare_args() {
-  # Device platform layer: cc13x2_26x2, cc13x4_26x4, cc32xx, darwin, efr32, esp32, external, freertos, linux, nrfconnect, k32w0, k32w1, qpg, tizen, cyw30739, bl602, mw320, zephyr, beken, openiotsdk, none.
+  # Device platform layer: cc13x2_26x2, cc13x4_26x4, cc32xx, darwin, efr32, esp32, external, freertos, linux, nrfconnect, k32w0, k32w1, qpg, tizen, cyw30739, bl602, mw320, zephyr, beken, openiotsdk, renesas, none.
 
   chip_device_platform = "auto"
   chip_platform_target = ""

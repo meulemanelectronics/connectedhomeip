@@ -36,6 +36,7 @@ declare_args() {
 }
 
 template("renesas_sdk") {
+
   config("${target_name}_config") {
     include_dirs = []
     defines = []
@@ -61,6 +62,7 @@ template("renesas_sdk") {
       "-nostartfiles",
     ]
   }
+
   source_set(target_name) {
     sources = [ ]
 
