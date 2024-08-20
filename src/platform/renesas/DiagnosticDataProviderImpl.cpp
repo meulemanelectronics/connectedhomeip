@@ -25,11 +25,15 @@
 #include <platform/DiagnosticDataProvider.h>
 #include <app/data-model/List.h>
 #include <platform/renesas/DiagnosticDataProviderImpl.h>
+#include <app-common/zap-generated/enums.h>
 
 #include "FreeRTOS.h"
 
+using namespace ::chip::app::Clusters::GeneralDiagnostics;
+
 namespace chip {
 namespace DeviceLayer {
+
 
 DiagnosticDataProviderImpl & DiagnosticDataProviderImpl::GetDefaultInstance()
 {
@@ -113,26 +117,26 @@ CHIP_ERROR DiagnosticDataProviderImpl::GetNetworkInterfaces(NetworkInterface ** 
                 switch (interfaceType)
                 {
                     case Inet::InterfaceType::Unknown:
-                        ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_UNSPECIFIED;
+                        ifp->type = InterfaceTypeEnum::kUnspecified;
                         break;
                     case Inet::InterfaceType::WiFi:
-                        ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_WI_FI;
+                        ifp->type = InterfaceTypeEnum::kWiFi;
                         break;
                     case Inet::InterfaceType::Ethernet:
-                        ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_ETHERNET;
+                        ifp->type = InterfaceTypeEnum::kEthernet;
                         break;
                     case Inet::InterfaceType::Thread:
-                        ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_THREAD;
+                        ifp->type = InterfaceTypeEnum::kThread;
                         break;
                     case Inet::InterfaceType::Cellular:
-                        ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_CELLULAR;
+                        ifp->type = InterfaceTypeEnum::kCellular;
                         break;
                 }
             }
             else
             {
                 ChipLogError(DeviceLayer, "Failed to get interface type");
-                ifp->type = EMBER_ZCL_INTERFACE_TYPE_ENUM_UNSPECIFIED;
+                ifp->type = InterfaceTypeEnum::kUnspecified;
             }
             ifp->offPremiseServicesReachableIPv4.SetNull();
             ifp->offPremiseServicesReachableIPv6.SetNull();
