@@ -76,6 +76,7 @@ static bool KeyExists(FabricIndex fabricIndex, GroupId groupId)
 static Status GroupAdd(FabricIndex fabricIndex, EndpointId endpointId, GroupId groupId, const CharSpan & groupName)
 {
     VerifyOrReturnError(IsValidGroupId(groupId), Status::ConstraintError);
+    VerifyOrReturnError(groupName.size() <= GroupDataProvider::GroupInfo::kGroupNameMax, Status::ConstraintError);
 
     GroupDataProvider * provider = GetGroupDataProvider();
     VerifyOrReturnError(nullptr != provider, Status::NotFound);
@@ -351,11 +352,7 @@ bool emberAfGroupsClusterAddGroupIfIdentifyingCallback(app::CommandHandler * com
         status = GroupAdd(fabricIndex, endpointId, groupId, groupName);
     }
 
-    CHIP_ERROR sendErr = commandObj->AddStatus(commandPath, status);
-    if (CHIP_NO_ERROR != sendErr)
-    {
-        ChipLogDetail(Zcl, "Groups: failed to send %s: %" CHIP_ERROR_FORMAT, "status_response", sendErr.Format());
-    }
+    commandObj->AddStatus(commandPath, status);
     return true;
 }
 

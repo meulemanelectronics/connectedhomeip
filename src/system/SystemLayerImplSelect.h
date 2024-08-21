@@ -61,6 +61,8 @@ public:
     void Shutdown() override;
     bool IsInitialized() const override { return mLayerState.IsInitialized(); }
     CHIP_ERROR StartTimer(Clock::Timeout delay, TimerCompleteCallback onComplete, void * appState) override;
+    CHIP_ERROR ExtendTimerTo(Clock::Timeout delay, TimerCompleteCallback onComplete, void * appState) override;
+    bool IsTimerActive(TimerCompleteCallback onComplete, void * appState) override;
     void CancelTimer(TimerCompleteCallback onComplete, void * appState) override;
     CHIP_ERROR ScheduleWork(TimerCompleteCallback onComplete, void * appState) override;
 
@@ -144,7 +146,9 @@ protected:
     int mSelectResult;
 
     ObjectLifeCycle mLayerState;
+#if !CHIP_SYSTEM_CONFIG_USE_LIBEV
     WakeEvent mWakeEvent;
+#endif
 
 #if CHIP_SYSTEM_CONFIG_POSIX_LOCKING
     std::atomic<pthread_t> mHandleSelectThread;

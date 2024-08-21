@@ -34,8 +34,7 @@
 #include <platform/CHIPDeviceConfig.h>
 #include <platform/ConfigurationManager.h>
 #include <platform/DeviceControlServer.h>
-#include <trace/trace.h>
-#include <tracing/scope.h>
+#include <tracing/macros.h>
 
 using namespace chip;
 using namespace chip::app;
@@ -51,11 +50,7 @@ using Transport::Session;
     {                                                                                                                              \
         if (!::chip::ChipError::IsSuccess(expr))                                                                                   \
         {                                                                                                                          \
-            CHIP_ERROR statusErr = commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::code);                  \
-            if (statusErr != CHIP_NO_ERROR)                                                                                        \
-            {                                                                                                                      \
-                ChipLogError(Zcl, "%s: %" CHIP_ERROR_FORMAT, #expr, statusErr.Format());                                           \
-            }                                                                                                                      \
+            commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::code, #expr);                                  \
             return true;                                                                                                           \
         }                                                                                                                          \
     } while (false)
@@ -155,8 +150,7 @@ bool emberAfGeneralCommissioningClusterArmFailSafeCallback(app::CommandHandler *
                                                            const app::ConcreteCommandPath & commandPath,
                                                            const Commands::ArmFailSafe::DecodableType & commandData)
 {
-    MATTER_TRACE_EVENT_SCOPE("ArmFailSafe", "GeneralCommissioning");
-    MATTER_TRACE_SCOPE(::chip::Tracing::Scope::GeneralCommissioning_ArmFailSafe);
+    MATTER_TRACE_SCOPE("ArmFailSafe", "GeneralCommissioning");
     auto & failSafeContext = Server::GetInstance().GetFailSafeContext();
     Commands::ArmFailSafeResponse::Type response;
 
@@ -218,8 +212,7 @@ bool emberAfGeneralCommissioningClusterCommissioningCompleteCallback(
     app::CommandHandler * commandObj, const app::ConcreteCommandPath & commandPath,
     const Commands::CommissioningComplete::DecodableType & commandData)
 {
-    MATTER_TRACE_EVENT_SCOPE("CommissioningComplete", "GeneralCommissioning");
-    MATTER_TRACE_SCOPE(::chip::Tracing::Scope::GeneralCommissioning_CommissioningComplete);
+    MATTER_TRACE_SCOPE("CommissioningComplete", "GeneralCommissioning");
 
     DeviceControlServer * devCtrl = &DeviceLayer::DeviceControlServer::DeviceControlSvr();
     auto & failSafe               = Server::GetInstance().GetFailSafeContext();
@@ -286,15 +279,25 @@ bool emberAfGeneralCommissioningClusterSetRegulatoryConfigCallback(app::CommandH
                                                                    const app::ConcreteCommandPath & commandPath,
                                                                    const Commands::SetRegulatoryConfig::DecodableType & commandData)
 {
-    MATTER_TRACE_EVENT_SCOPE("SetRegulatoryConfig", "GeneralCommissioning");
-    MATTER_TRACE_SCOPE(::chip::Tracing::Scope::GeneralCommissioning_SetRegulatoryConfig);
+    MATTER_TRACE_SCOPE("SetRegulatoryConfig", "GeneralCommissioning");
     DeviceControlServer * server = &DeviceLayer::DeviceControlServer::DeviceControlSvr();
     Commands::SetRegulatoryConfigResponse::Type response;
+
+    auto & countryCode = commandData.countryCode;
+    bool isValidLength = countryCode.size() == DeviceLayer::ConfigurationManager::kMaxLocationLength;
+    if (!isValidLength)
+    {
+        ChipLogError(Zcl, "Invalid country code: '%.*s'", static_cast<int>(countryCode.size()), countryCode.data());
+        commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::ConstraintError);
+        return true;
+    }
 
     if (commandData.newRegulatoryConfig > RegulatoryLocationTypeEnum::kIndoorOutdoor)
     {
         response.errorCode = CommissioningErrorEnum::kValueOutsideRange;
-        response.debugText = commandData.countryCode;
+        // TODO: How does using the country code in debug text make sense, if
+        // the real issue is the newRegulatoryConfig value?
+        response.debugText = countryCode;
     }
     else
     {
@@ -308,11 +311,13 @@ bool emberAfGeneralCommissioningClusterSetRegulatoryConfigCallback(app::CommandH
         if ((locationCapability != to_underlying(RegulatoryLocationTypeEnum::kIndoorOutdoor)) && (location != locationCapability))
         {
             response.errorCode = CommissioningErrorEnum::kValueOutsideRange;
-            response.debugText = commandData.countryCode;
+            // TODO: How does using the country code in debug text make sense, if
+            // the real issue is the newRegulatoryConfig value?
+            response.debugText = countryCode;
         }
         else
         {
-            CheckSuccess(server->SetRegulatoryConfig(location, commandData.countryCode), Failure);
+            CheckSuccess(server->SetRegulatoryConfig(location, countryCode), Failure);
             Breadcrumb::Set(commandPath.mEndpointId, commandData.breadcrumb);
             response.errorCode = CommissioningErrorEnum::kOk;
         }

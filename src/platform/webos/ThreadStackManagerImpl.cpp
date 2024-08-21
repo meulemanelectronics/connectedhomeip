@@ -25,6 +25,8 @@
 #include <platform/ThreadStackManager.h>
 #include <platform/webos/NetworkCommissioningDriver.h>
 
+#include <app-common/zap-generated/ids/Attributes.h>
+
 #include <nlbyteorder.hpp>
 #include <nlio-byteorder.hpp>
 #include <nlio.hpp>
@@ -478,32 +480,6 @@ CHIP_ERROR ThreadStackManagerImpl::_SetThreadDeviceType(ConnectivityManager::Thr
 
     return CHIP_NO_ERROR;
 }
-
-#if CHIP_DEVICE_CONFIG_ENABLE_SED
-CHIP_ERROR ThreadStackManagerImpl::_GetSEDPollingConfig(ConnectivityManager::SEDPollingConfig & pollingConfig)
-{
-    (void) pollingConfig;
-
-    ChipLogError(DeviceLayer, "Polling config is not supported on linux");
-    return CHIP_ERROR_NOT_IMPLEMENTED;
-}
-
-CHIP_ERROR ThreadStackManagerImpl::_SetSEDPollingConfig(const ConnectivityManager::SEDPollingConfig & pollingConfig)
-{
-    (void) pollingConfig;
-
-    ChipLogError(DeviceLayer, "Polling config is not supported on linux");
-    return CHIP_ERROR_NOT_IMPLEMENTED;
-}
-
-CHIP_ERROR ThreadStackManagerImpl::_RequestSEDFastPollingMode(bool onOff)
-{
-    (void) onOff;
-
-    ChipLogError(DeviceLayer, "Polling config is not supported on linux");
-    return CHIP_ERROR_NOT_IMPLEMENTED;
-}
-#endif
 
 bool ThreadStackManagerImpl::_HaveMeshConnectivity()
 {

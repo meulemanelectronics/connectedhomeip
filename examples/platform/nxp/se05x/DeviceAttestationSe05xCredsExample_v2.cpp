@@ -14,8 +14,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 #include "DeviceAttestationSe05xCredsExample.h"
 
+#include <CHIPCryptoPAL_se05x.h>
 #include <credentials/examples/ExampleDACs.h>
 #include <credentials/examples/ExamplePAI.h>
 #include <crypto/CHIPCryptoPAL.h>
@@ -23,16 +25,8 @@
 #include <lib/core/TLV.h>
 #include <lib/core/TLVTags.h>
 #include <lib/core/TLVTypes.h>
-#include <lib/core/TLVUtilities.hpp>
+#include <lib/core/TLVUtilities.h>
 #include <lib/support/Span.h>
-
-#if CHIP_CRYPTO_HSM
-#include <crypto/hsm/CHIPCryptoPALHsm.h>
-#endif
-
-#ifdef ENABLE_HSM_DEVICE_ATTESTATION
-
-#include <crypto/hsm/nxp/CHIPCryptoPALHsm_SE05X_utils.h>
 
 /* Device attestation key ids */
 #define DEV_ATTESTATION_KEY_SE05X_ID 0x7D300000
@@ -179,8 +173,8 @@ CHIP_ERROR ExampleSe05xDACProviderv2::SignWithDeviceAttestationKey(const ByteSpa
     CHIP_ERROR err                                                   = CHIP_NO_ERROR;
     uint8_t signature_se05x[Crypto::kMax_ECDSA_Signature_Length_Der] = { 0 };
     size_t signature_se05x_len                                       = sizeof(signature_se05x);
-    VerifyOrReturnError(IsSpanUsable(out_signature_buffer), CHIP_ERROR_INVALID_ARGUMENT);
-    VerifyOrReturnError(IsSpanUsable(message_to_sign), CHIP_ERROR_INVALID_ARGUMENT);
+    VerifyOrReturnError(!out_signature_buffer.empty(), CHIP_ERROR_INVALID_ARGUMENT);
+    VerifyOrReturnError(!message_to_sign.empty(), CHIP_ERROR_INVALID_ARGUMENT);
 
     ChipLogDetail(Crypto, "Sign using DA key from se05x (Using internal sign)");
 
@@ -279,5 +273,3 @@ DeviceAttestationCredentialsProvider * GetExampleSe05xDACProviderv2()
 } // namespace Examples
 } // namespace Credentials
 } // namespace chip
-
-#endif // #ifdef ENABLE_HSM_DEVICE_ATTESTATION

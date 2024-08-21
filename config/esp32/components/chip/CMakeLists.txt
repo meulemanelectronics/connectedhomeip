@@ -31,7 +31,7 @@ endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/ota-image.cmake)
 
-set(CHIP_REQUIRE_COMPONENTS freertos lwip bt mbedtls fatfs app_update console openthread nvs_flash spi_flash)
+set(CHIP_REQUIRE_COMPONENTS esp_eth freertos lwip bt mbedtls fatfs app_update console openthread nvs_flash spi_flash)
 
 if(NOT "${IDF_TARGET}" STREQUAL "esp32h2")
     list(APPEND CHIP_REQUIRE_COMPONENTS mdns)
@@ -124,19 +124,25 @@ if(CONFIG_DISABLE_IPV4)
     chip_gn_arg_append("chip_inet_config_enable_ipv4"        "false")
 endif()
 
+if(CONFIG_DISABLE_READ_CLIENT)
+    chip_gn_arg_append("chip_enable_read_client"             "false")
+endif()
+
 if(CHIP_CODEGEN_PREGEN_DIR)
     chip_gn_arg_append("chip_code_pre_generated_directory"  "\"${CHIP_CODEGEN_PREGEN_DIR}\"")
+endif()
+
+if(CONFIG_ENABLE_ICD_SERVER)
+    chip_gn_arg_append("chip_enable_icd_server"               "true")
 endif()
 
 if(CONFIG_ENABLE_PW_RPC)
     string(APPEND chip_gn_args "import(\"//build_overrides/pigweed.gni\")\n")
     chip_gn_arg_append("remove_default_configs"             "[\"//third_party/connectedhomeip/third_party/pigweed/repo/pw_build:toolchain_cpp_standard\"]")
     chip_gn_arg_append("chip_build_pw_rpc_lib"              "true")
-    chip_gn_arg_append("chip_build_pw_trace_lib"            "true")
     chip_gn_arg_append("pw_log_BACKEND"                     "\"//third_party/connectedhomeip/third_party/pigweed/repo/pw_log_basic\"")
     chip_gn_arg_append("pw_assert_BACKEND"                  "\"//third_party/connectedhomeip/third_party/pigweed/repo/pw_assert_log:check_backend\"")
     chip_gn_arg_append("pw_sys_io_BACKEND"                  "\"//third_party/connectedhomeip/examples/platform/esp32/pw_sys_io:pw_sys_io_esp32\"")
-    chip_gn_arg_append("pw_trace_BACKEND"                   "\"//third_party/connectedhomeip/third_party/pigweed/repo/pw_trace_tokenized\"")
     chip_gn_arg_append("dir_pw_third_party_nanopb"          "\"//third_party/connectedhomeip/third_party/nanopb/repo\"")
     chip_gn_arg_append("pw_build_LINK_DEPS"                 "[\"\$dir_pw_assert:impl\", \"\$dir_pw_log:impl\"]")
     chip_gn_arg_append("pw_rpc_CONFIG"                      "\"//third_party/connectedhomeip/third_party/pigweed/repo/pw_rpc:disable_global_mutex\"")
@@ -158,6 +164,10 @@ endif()
 
 if (CONFIG_ENABLE_CHIP_SHELL)
     chip_gn_arg_append("chip_build_libshell"                "true")
+endif()
+
+if (CONFIG_ENABLE_CHIP_CONTROLLER_BUILD)
+    chip_gn_arg_append("chip_build_controller"              "true")
 endif()
 
 if (CONFIG_ENABLE_WIFI_STATION OR CONFIG_ENABLE_WIFI_AP)
@@ -250,8 +260,21 @@ if (CONFIG_SEC_CERT_DAC_PROVIDER)
     chip_gn_arg_append("chip_use_secure_cert_dac_provider"                 "true")
 endif()
 
+if (CONFIG_ENABLE_ESP_INSIGHTS_TRACE)
+  chip_gn_arg_bool("matter_enable_tracing_support"  "true")
+  chip_gn_arg_append("matter_trace_config" "\"${CHIP_ROOT}/src/tracing/esp32_trace:esp32_trace_tracing\"")
+endif()
+
 if (CONFIG_USE_ESP32_ECDSA_PERIPHERAL)
     chip_gn_arg_append("chip_use_esp32_ecdsa_peripheral" "true")
+endif()
+
+if (CONFIG_ENABLE_ESP_INSIGHTS_TRACE)
+   target_include_directories(${COMPONENT_LIB} INTERFACE "${CHIP_ROOT}/src/tracing/esp32_trace/include")
+endif()
+
+if (CONFIG_ENABLE_MATTER_EVENT_LIST)
+    chip_gn_arg_append  ("enable_eventlist_attribute" "true")
 endif()
 
 set(args_gn_input "${CMAKE_CURRENT_BINARY_DIR}/args.gn.in")
@@ -304,14 +327,28 @@ set(GN_ROOT_TARGET ${CHIP_ROOT}/config/esp32)
 set(chip_libraries "${CMAKE_CURRENT_BINARY_DIR}/lib/libCHIP.a")
 
 if(CONFIG_ENABLE_PW_RPC)
-    list(APPEND chip_libraries "${CMAKE_CURRENT_BINARY_DIR}/lib/libPwRpc.a")
+  list(APPEND chip_libraries "${CMAKE_CURRENT_BINARY_DIR}/lib/libPwRpc.a")
 endif()
+
+if (CONFIG_ENABLE_ESP_INSIGHTS_TRACE)
+  list(APPEND chip_libraries "${CMAKE_CURRENT_BINARY_DIR}/lib/libEsp32TracingBackend.a")
+endif()
+
+# When using the pregenerated files, there is a edge case where an error appears for
+# undeclared argument chip_code_pre_generated_directory. To get around with it we are
+# disabling the --fail-on-unused-args flag.
+# For more, see: https://github.com/project-chip/connectedhomeip/issues/27636
+if (CHIP_CODEGEN_PREGEN_DIR)
+    set(GN_CONFIGURE_COMMAND ${GN_EXECUTABLE} --root=${GN_ROOT_TARGET} gen --check ${CMAKE_CURRENT_BINARY_DIR})
+else ()
+    set(GN_CONFIGURE_COMMAND ${GN_EXECUTABLE} --root=${GN_ROOT_TARGET} gen --check --fail-on-unused-args ${CMAKE_CURRENT_BINARY_DIR})
+endif ()
 
 externalproject_add(
     chip_gn
     SOURCE_DIR              ${CHIP_ROOT}
     BINARY_DIR              ${CMAKE_CURRENT_BINARY_DIR}
-    CONFIGURE_COMMAND       ${GN_EXECUTABLE} --root=${GN_ROOT_TARGET} gen --check --fail-on-unused-args ${CMAKE_CURRENT_BINARY_DIR}
+    CONFIGURE_COMMAND       ${GN_CONFIGURE_COMMAND}
     BUILD_COMMAND           ninja "esp32"
     INSTALL_COMMAND         ""
     BUILD_BYPRODUCTS        ${chip_libraries}
@@ -402,6 +439,11 @@ if (CONFIG_SEC_CERT_DAC_PROVIDER)
     list(APPEND chip_libraries $<TARGET_FILE:${esp32_secure_cert_mgr_lib}>)
 endif()
 
+if (CONFIG_ENABLE_ESP_INSIGHTS_TRACE)
+    idf_component_get_property(esp_insights_lib espressif__esp_insights COMPONENT_LIB)
+    list(APPEND chip_libraries $<TARGET_FILE:${esp_insights_lib}>)
+endif()
+
 idf_component_get_property(lwip_lib lwip COMPONENT_LIB)
 list(APPEND chip_libraries $<TARGET_FILE:${lwip_lib}>)
 
@@ -450,26 +492,16 @@ foreach(phy_blob ${phy_blobs})
     list(APPEND chip_libraries "${esp_phy_dir}/lib/${target_name}/lib${phy_blob}.a")
 endforeach()
 
-idf_component_get_property(esp_event_lib esp_event COMPONENT_LIB)
-list(APPEND chip_libraries $<TARGET_FILE:${esp_event_lib}>)
-
-idf_component_get_property(hal_lib hal COMPONENT_LIB)
-list(APPEND chip_libraries $<TARGET_FILE:${hal_lib}>)
-
-idf_component_get_property(esp_system_lib esp_system COMPONENT_LIB)
-list(APPEND chip_libraries $<TARGET_FILE:${esp_system_lib}>)
-
-idf_component_get_property(soc_lib soc COMPONENT_LIB)
-list(APPEND chip_libraries $<TARGET_FILE:${soc_lib}>)
-
-idf_component_get_property(efuse_lib efuse COMPONENT_LIB)
-list(APPEND chip_libraries $<TARGET_FILE:${efuse_lib}>)
-
-idf_component_get_property(vfs_lib vfs COMPONENT_LIB)
-list(APPEND chip_libraries $<TARGET_FILE:${vfs_lib}>)
-
-idf_component_get_property(driver_lib driver COMPONENT_LIB)
-list(APPEND chip_libraries $<TARGET_FILE:${driver_lib}>)
+set(components_to_link esp_event hal esp_system soc efuse vfs driver esp_coex freertos)
+idf_build_get_property(build_components BUILD_COMPONENTS)
+foreach(component ${components_to_link})
+    # Some of the components are not present in IDF v4.x
+    # So, Check if the component is in the list of build components
+    if("${component}" IN_LIST build_components)
+        idf_component_get_property(lib_name ${component} COMPONENT_LIB)
+        list(APPEND chip_libraries $<TARGET_FILE:${lib_name}>)
+    endif()
+endforeach()
 
 target_link_libraries(${COMPONENT_LIB} INTERFACE -Wl,--start-group
                                                 ${chip_libraries}

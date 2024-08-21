@@ -35,6 +35,8 @@
 
 #include <app/util/af-types.h>
 
+#include <app/util/endpoint-config-api.h>
+
 #include <lib/core/DataModelTypes.h>
 #include <lib/support/Iterators.h>
 #include <lib/support/SafeInt.h>
@@ -128,12 +130,7 @@ extern EmberAfDefinedEndpoint emAfEndpoints[];
 #endif
 
 /**
- * @brief Macro that takes index of endpoint, and returns Zigbee endpoint
- */
-chip::EndpointId emberAfEndpointFromIndex(uint16_t index);
-
-/**
- * @brief Returns root endpoint of a composed bridged device
+ * @brief Returns parent endpoint for a given endpoint index
  */
 chip::EndpointId emberAfParentEndpointFromIndex(uint16_t index);
 
@@ -192,11 +189,6 @@ uint16_t emberAfGetClusterServerEndpointIndex(chip::EndpointId endpoint, chip::C
                                               uint16_t fixedClusterServerEndpointCount);
 
 /**
- * @brief Returns the total number of endpoints (dynamic and pre-compiled).
- */
-uint16_t emberAfEndpointCount(void);
-
-/**
  * @brief Returns the number of pre-compiled endpoints.
  */
 uint16_t emberAfFixedEndpointCount(void);
@@ -238,16 +230,6 @@ bool emberAfIsDeviceIdentifying(chip::EndpointId endpoint);
 
 /** @name Miscellaneous */
 // @{
-
-/**
- * @brief Enable/disable endpoints
- */
-bool emberAfEndpointEnableDisable(chip::EndpointId endpoint, bool enable);
-
-/**
- * @brief Determine if an endpoint at the specified index is enabled or disabled
- */
-bool emberAfEndpointIndexIsEnabled(uint16_t index);
 
 /** @brief Returns true if a given ZCL data type is a list type. */
 bool emberAfIsThisDataTypeAListType(EmberAfAttributeType dataType);
@@ -320,6 +302,31 @@ private:
     uint16_t mEndpointCount = emberAfEndpointCount();
     ClusterId mClusterId;
 };
+
+/**
+ * @brief Sets the parent endpoint for a given endpoint
+ */
+CHIP_ERROR SetParentEndpointForEndpoint(EndpointId childEndpoint, EndpointId parentEndpoint);
+
+/**
+ * @brief Sets an Endpoint to use Flat Composition
+ */
+CHIP_ERROR SetFlatCompositionForEndpoint(EndpointId endpoint);
+
+/**
+ * @brief Sets an Endpoint to use Tree Composition
+ */
+CHIP_ERROR SetTreeCompositionForEndpoint(EndpointId endpoint);
+
+/**
+ * @brief Returns true is an Endpoint has flat composition
+ */
+bool IsFlatCompositionForEndpoint(EndpointId endpoint);
+
+/**
+ * @brief Returns true is an Endpoint has tree composition
+ */
+bool IsTreeCompositionForEndpoint(EndpointId endpoint);
 
 } // namespace app
 } // namespace chip

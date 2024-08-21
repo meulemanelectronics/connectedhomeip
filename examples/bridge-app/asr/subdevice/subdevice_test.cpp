@@ -20,6 +20,7 @@
 #include "SubDeviceManager.h"
 #include <app-common/zap-generated/ids/Attributes.h>
 #include <app-common/zap-generated/ids/Clusters.h>
+#include <app-common/zap-generated/ids/Commands.h>
 #include <app/ConcreteAttributePath.h>
 #include <app/InteractionModelEngine.h>
 #include <app/clusters/identify-server/identify-server.h>
@@ -28,9 +29,9 @@
 #include <app/util/attribute-storage.h>
 #include <assert.h>
 #include <lib/core/CHIPError.h>
+#include <lib/core/ErrorStr.h>
 #include <lib/support/CHIPMem.h>
 #include <lib/support/CHIPMemString.h>
-#include <lib/support/ErrorStr.h>
 #include <lib/support/ZclString.h>
 #include <platform/CHIPDeviceLayer.h>
 
@@ -41,7 +42,7 @@ using namespace ::chip::System;
 using namespace ::chip::Platform;
 using namespace ::chip::app::Clusters;
 
-#if ENABLE_ASR_BRIDGE_SUBDEVICE_TEST
+#ifdef ENABLE_ASR_BRIDGE_SUBDEVICE_TEST
 
 static const int kNodeLabelSize = 32;
 // Current ZCL implementation of Struct uses a max-size array of 254 bytes

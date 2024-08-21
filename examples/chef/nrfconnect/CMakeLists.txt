@@ -68,6 +68,7 @@ target_include_directories(app PRIVATE
                            ${CMAKE_CURRENT_SOURCE_DIR}/third_party/connectedhomeip/zzz_generated/app-common
                            ${GEN_DIR}
                            ${CHEF}
+                           ${CHEF}/common
                            ${GEN_DIR}/../
                            ${CHIP_ROOT}/src
                            ${CHIP_ROOT}/examples/shell/shell_common/include
@@ -90,6 +91,11 @@ endif()
 target_sources(app PRIVATE
     ${CHEF}/nrfconnect/main.cpp
     ${CHEF}/common/stubs.cpp
+    ${CHEF}/common/chef-channel-manager.cpp
+    ${CHEF}/common/chef-air-quality.cpp
+    ${CHEF}/common/chef-concentration-measurement.cpp
+    ${CHEF}/common/chef-rvc-mode-delegate.cpp
+    ${CHEF}/common/chef-rvc-operational-state-delegate.cpp
 )
 
 message(STATUS ${CHEF}/devices/${SAMPLE_NAME}.zap)

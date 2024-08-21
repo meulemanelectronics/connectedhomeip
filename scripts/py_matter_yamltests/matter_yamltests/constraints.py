@@ -15,6 +15,7 @@
 #    limitations under the License.
 #
 
+import math
 import re
 import string
 from abc import ABC, abstractmethod
@@ -195,7 +196,7 @@ class BaseConstraint(ABC):
             raise ConstraintAnyOfError(self._context, reason)
         else:
             # This should not happens.
-            raise ConstraintParseError(f'Unknown constraint instance.')
+            raise ConstraintParseError('Unknown constraint instance.')
 
 
 class _ConstraintHasValue(BaseConstraint):
@@ -219,7 +220,7 @@ class _ConstraintHasValue(BaseConstraint):
 
     def get_reason(self, value, value_type_name) -> str:
         if self._has_value:
-            return f"The constraint expects a value but there isn't one."
+            return "The constraint expects a value but there isn't one."
         return f"The response contains the value ({value}), but wasn't expecting any value."
 
 
@@ -535,7 +536,8 @@ class _ConstraintType(BaseConstraint):
 
 class _ConstraintMinLength(BaseConstraint):
     def __init__(self, context, min_length):
-        super().__init__(context, types=[str, bytes, list])
+        super().__init__(context, types=[
+            str, bytes, list], is_null_allowed=True)
         self._min_length = min_length
 
     def check_response(self, value, value_type_name) -> bool:
@@ -547,7 +549,8 @@ class _ConstraintMinLength(BaseConstraint):
 
 class _ConstraintMaxLength(BaseConstraint):
     def __init__(self, context, max_length):
-        super().__init__(context, types=[str, bytes, list])
+        super().__init__(context, types=[
+            str, bytes, list], is_null_allowed=True)
         self._max_length = max_length
 
     def check_response(self, value, value_type_name) -> bool:
@@ -570,7 +573,7 @@ class _ConstraintIsHexString(BaseConstraint):
             chars = []
 
             for char in value:
-                if not char in string.hexdigits:
+                if char not in string.hexdigits:
                     chars.append(char)
 
             if len(chars) == 1:
@@ -686,20 +689,53 @@ class _ConstraintMaxValue(BaseConstraint):
         return f'The response value ({value}) should be lower or equal to the constraint but {value} > {self._max_value}.'
 
 
+def _values_match(expected_value, received_value):
+    # TODO: This is a copy of _response_value_validation over in parser.py,
+    # but with the recursive calls renamed.
+    if isinstance(expected_value, list):
+        if len(expected_value) != len(received_value):
+            return False
+
+        for index, expected_item in enumerate(expected_value):
+            received_item = received_value[index]
+            if not _values_match(expected_item, received_item):
+                return False
+        return True
+    elif isinstance(expected_value, dict):
+        for key, expected_item in expected_value.items():
+            received_item = received_value.get(key)
+            if not _values_match(expected_item, received_item):
+                return False
+        return True
+    else:
+        return expected_value == received_value
+
+
 class _ConstraintContains(BaseConstraint):
     def __init__(self, context, contains):
         super().__init__(context, types=[list])
         self._contains = contains
 
+    def _find_missing_values(self, expected_values, received_values):
+        # Make a copy of received_values, so that we can remove things from the
+        # list as they match up against our expected values.
+        received_values = list(received_values)
+        missing_values = []
+        for expected_value in expected_values:
+            for index, received_value in enumerate(received_values):
+                if _values_match(expected_value, received_value):
+                    # We've used up this received value
+                    del received_values[index]
+                    break
+            else:
+                missing_values.append(expected_value)
+        return missing_values
+
     def check_response(self, value, value_type_name) -> bool:
-        return set(self._contains).issubset(value)
+        return len(self._find_missing_values(self._contains, value)) == 0
 
     def get_reason(self, value, value_type_name) -> str:
-        expected_values = []
-
-        for expected_value in self._contains:
-            if expected_value not in value:
-                expected_values.append(expected_value)
+        expected_values = self._find_missing_values(self._contains, value)
 
         return f'The response ({value}) is missing {expected_values}.'
 
@@ -710,14 +746,19 @@ class _ConstraintExcludes(BaseConstraint):
         self._excludes = excludes
 
     def check_response(self, value, value_type_name) -> bool:
-        return set(self._excludes).isdisjoint(value)
+        for expected_value in self._excludes:
+            for received_value in value:
+                if _values_match(expected_value, received_value):
+                    return False
+        return True
 
     def get_reason(self, value, value_type_name) -> str:
         unexpected_values = []
 
         for unexpected_value in self._excludes:
-            if unexpected_value in value:
-                unexpected_values.append(unexpected_value)
+            for received_value in value:
+                if _values_match(unexpected_value, received_value):
+                    unexpected_values.append(unexpected_value)
 
         return f'The response ({value}) contains {unexpected_values}.'
 
@@ -728,7 +769,7 @@ class _ConstraintHasMaskSet(BaseConstraint):
         self._has_masks_set = has_masks_set
 
     def check_response(self, value, value_type_name) -> bool:
-        return all([(value & mask) == mask for mask in self._has_masks_set])
+        return all([(value & mask) != 0 for mask in self._has_masks_set])
 
     def get_reason(self, value, value_type_name) -> str:
         expected_masks = []
