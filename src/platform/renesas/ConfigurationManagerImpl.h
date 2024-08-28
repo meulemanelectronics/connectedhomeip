@@ -49,6 +49,8 @@ public:
     CHIP_ERROR GetPrimaryWiFiMACAddress(uint8_t * buf) override;
     CHIP_ERROR GetSoftwareVersion(uint32_t & softwareVer) override;
     CHIP_ERROR GetSoftwareVersionString(char * buf, size_t bufSize) override;
+    CHIP_ERROR GetInitialPairingInstruction(char * buf, size_t bufSize) override;
+    CHIP_ERROR GetSecondaryPairingInstruction(char * buf, size_t bufSize) override;
     void RegisterInformationProvider(ConfigurationInformationProvider& provider);
 private:
     ConfigurationManagerImpl();
