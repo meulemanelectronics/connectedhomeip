@@ -262,6 +262,16 @@ CHIP_ERROR ConfigurationManagerImpl::GetSoftwareVersionString(char * buf, size_t
     return CHIP_ERROR_INTERNAL;
 }
 
+CHIP_ERROR ConfigurationManagerImpl::GetInitialPairingInstruction(char * buf, size_t bufSize)
+{
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+}
+
+CHIP_ERROR ConfigurationManagerImpl::GetSecondaryPairingInstruction(char * buf, size_t bufSize)
+{
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+}
+
 ConfigurationManager & ConfigurationMgrImpl()
 {
     return ConfigurationManagerImpl::GetDefaultInstance();
