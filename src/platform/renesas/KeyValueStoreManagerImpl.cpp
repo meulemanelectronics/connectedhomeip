@@ -272,6 +272,27 @@ CHIP_ERROR KeyValueStoreManagerImpl::Erase(void)
     cy_rslt_t result = mtb_kvstore_reset(&kvstore_obj);
     return ConvertCyResultToChip(result);
 }
+
+uint32_t KeyValueStoreManagerImpl::remaining_size()
+{
+    if (!init_success)
+    {
+        ChipLogError(DeviceLayer, "keyvaluestore not initialized");
+        return 0;
+    }
+    return mtb_kvstore_remaining_size(&kvstore_obj);
+}
+
+uint32_t KeyValueStoreManagerImpl::keyvaluestore_size()
+{
+    if (!init_success)
+    {
+        ChipLogError(DeviceLayer, "keyvaluestore not initialized");
+        return 0;
+    }
+    return mtb_kvstore_size(&kvstore_obj);
+}
+
 } // namespace PersistedStorage
 } // namespace DeviceLayer
 } // namespace chip

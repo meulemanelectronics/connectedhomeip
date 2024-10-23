@@ -25,6 +25,7 @@
 #pragma once
 
 #include "MTBKeyValueStore.h"
+#include <platform/KeyValueStoreManager.h>
 
 namespace chip {
 namespace DeviceLayer {
@@ -42,6 +43,8 @@ public:
     CHIP_ERROR _Delete(const char * key);
     CHIP_ERROR _Put(const char * key, const void * value, size_t value_size);
     CHIP_ERROR Erase(void);
+    uint32_t keyvaluestore_size();
+    uint32_t remaining_size();
 
 private:
     // ===== Members for internal use by the following friends.
