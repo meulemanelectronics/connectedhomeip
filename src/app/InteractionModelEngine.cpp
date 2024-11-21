@@ -1060,8 +1060,14 @@ bool InteractionModelEngine::EnsureResourceForSubscription(FabricIndex aFabricIn
 
     countResourceUsage();
 
+    ChipLogDetail(InteractionModel, "Fabric [%d] subscription resources: attribute paths %d + %d <= %d, event paths %d + %d <= %d, read handlers %d + 1 <= %d",
+        aFabricIndex, 
+        usedAttributePaths, aRequestedAttributePathCount, attributePathCap,
+        usedEventPaths, aRequestedEventPathCount, eventPathCap,
+        usedReadHandlers, readHandlerCap);
     if (usedAttributePaths + aRequestedAttributePathCount <= attributePathCap &&
-        usedEventPaths + aRequestedEventPathCount <= eventPathCap && usedReadHandlers < readHandlerCap)
+        usedEventPaths + aRequestedEventPathCount <= eventPathCap && 
+        usedReadHandlers < readHandlerCap)
     {
         // We have enough resources, then we serve the requests in a best-effort manner.
         return true;
@@ -1069,7 +1075,8 @@ bool InteractionModelEngine::EnsureResourceForSubscription(FabricIndex aFabricIn
 
     if ((aRequestedAttributePathCount > kMinSupportedPathsPerSubscription &&
          usedAttributePaths + aRequestedAttributePathCount > attributePathCap) ||
-        (aRequestedEventPathCount > kMinSupportedPathsPerSubscription && usedEventPaths + aRequestedEventPathCount > eventPathCap))
+        (aRequestedEventPathCount > kMinSupportedPathsPerSubscription && 
+         usedEventPaths + aRequestedEventPathCount > eventPathCap))
     {
         // We cannot offer enough resources, and the subscription is requesting more than the spec limit.
         return false;
@@ -1098,7 +1105,8 @@ bool InteractionModelEngine::EnsureResourceForSubscription(FabricIndex aFabricIn
         {
             // The resources are enough to serve this request, do not evict anything.
             if (usedAttributePaths + aRequestedAttributePathCount <= attributePathCap &&
-                usedEventPaths + aRequestedEventPathCount <= eventPathCap && usedReadHandlers < readHandlerCap)
+                usedEventPaths + aRequestedEventPathCount <= eventPathCap && 
+                usedReadHandlers < readHandlerCap)
             {
                 break;
             }
@@ -1111,7 +1119,8 @@ bool InteractionModelEngine::EnsureResourceForSubscription(FabricIndex aFabricIn
     // oldest) subscriptions from the current fabric until we have enough resource for the new subscription.
     didEvictHandler = true;
     while ((usedAttributePaths + aRequestedAttributePathCount > attributePathCap ||
-            usedEventPaths + aRequestedEventPathCount > eventPathCap || usedReadHandlers >= readHandlerCap) &&
+            usedEventPaths + aRequestedEventPathCount > eventPathCap || 
+            usedReadHandlers >= readHandlerCap) &&
            // Avoid infinity loop
            didEvictHandler)
     {
@@ -1119,13 +1128,16 @@ bool InteractionModelEngine::EnsureResourceForSubscription(FabricIndex aFabricIn
     }
 
     // If didEvictHandler is false, means the loop above evicted all subscriptions from the current fabric but we still don't have
-    // enough resources for the new subscription, this should never happen.
+    // enough resources for the new subscription, this should rarely happen. Only if there are no subscriptions to evict.
+    // This happens if other fabrics are at or under quote and aFabricIndex has no subscriptions at all to convict,
+    // but the remaining read hanlders are used up by normal reads.  
     // This is safe as long as we have rejected subscriptions without a fabric associated (with a PASE session) before.
     // Note: Spec#5141: should reject subscription requests on PASE sessions.
-    VerifyOrDieWithMsg(didEvictHandler, DataManagement, "Failed to get required resources by evicting existing subscriptions.");
-
-    // We have ensured enough resources by the logic above.
-    return true;
+    if (!didEvictHandler)
+    {
+        ChipLogError(InteractionModel, "Failed to get required resources by evicting existing subscriptions.");
+    }
+    return didEvictHandler;
 }
 
 bool InteractionModelEngine::TrimFabricForRead(FabricIndex aFabricIndex)
