@@ -648,7 +648,7 @@ EmberAfStatus emAfReadOrWriteAttribute(EmberAfAttributeSearchRecord * attRecord,
                                         {
                                             if (emberAfIsStringAttributeType(am->attributeType) || emberAfIsLongStringAttributeType(am->attributeType))
                                             {
-                                                ChipLogError(DataManagement, "Attribute string to large for buffer, the string will be truncated. ReadLength: %u, < AttributeSize: %u", readLength, emberAfAttributeSize(am));
+                                                ChipLogDetail(DataManagement, "Attribute size exceeds maximum read size, the string might be truncated. ReadLength: %u, < AttributeSize: %u", readLength, emberAfAttributeSize(am));
                                                 return emberAfExternalAttributeReadCallback(attRecord->endpoint, attRecord->clusterId, am, buffer, readLength);
                                             }
                                             else
