@@ -129,12 +129,20 @@ CHIP_ERROR ConfigurationManagerImpl::GetLocationCapability(uint8_t & location)
 
 CHIP_ERROR ConfigurationManagerImpl::GetBootReason(uint32_t & bootReason)
 {
-    return ReadConfigValue(RenesasConfig::kConfigKey_BootReason, bootReason);
+    if (m_provider != nullptr)
+    {
+        return m_provider->GetBootReason(bootReason);
+    }
+    return CHIP_ERROR_INTERNAL;
 }
 
 CHIP_ERROR ConfigurationManagerImpl::StoreBootReason(uint32_t bootReason)
 {
-    return WriteConfigValue(RenesasConfig::kConfigKey_BootReason, bootReason);
+    if (m_provider != nullptr)
+    {
+        return m_provider->StoreBootReason(bootReason);
+    }
+    return CHIP_ERROR_INTERNAL;
 }
 
 bool ConfigurationManagerImpl::CanFactoryReset(void)
