@@ -638,10 +638,29 @@ EmberAfStatus emAfReadOrWriteAttribute(EmberAfAttributeSearchRecord * attRecord,
                                 // Is the attribute externally stored?
                                 if (am->mask & ATTRIBUTE_MASK_EXTERNAL_STORAGE)
                                 {
-                                    return (write ? emberAfExternalAttributeWriteCallback(attRecord->endpoint, attRecord->clusterId,
-                                                                                          am, buffer)
-                                                  : emberAfExternalAttributeReadCallback(attRecord->endpoint, attRecord->clusterId,
-                                                                                         am, buffer, emberAfAttributeSize(am)));
+                                    if (write) 
+                                    {
+                                        return emberAfExternalAttributeWriteCallback(attRecord->endpoint, attRecord->clusterId, am, buffer);
+                                    } 
+                                    else
+                                    {
+                                        if ((readLength < emberAfAttributeSize(am)) && (readLength != 0))
+                                        {
+                                            if (emberAfIsStringAttributeType(am->attributeType) || emberAfIsLongStringAttributeType(am->attributeType))
+                                            {
+                                                ChipLogDetail(DataManagement, "Attribute size exceeds maximum read size, the string might be truncated. ReadLength: %u, < AttributeSize: %u", readLength, emberAfAttributeSize(am));
+                                                return emberAfExternalAttributeReadCallback(attRecord->endpoint, attRecord->clusterId, am, buffer, readLength);
+                                            }
+                                            else
+                                            {
+                                                return EMBER_ZCL_STATUS_RESOURCE_EXHAUSTED;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            return emberAfExternalAttributeReadCallback(attRecord->endpoint, attRecord->clusterId, am, buffer, emberAfAttributeSize(am));
+                                        }
+                                    }
                                 }
 
                                 // Internal storage is only supported for fixed endpoints
