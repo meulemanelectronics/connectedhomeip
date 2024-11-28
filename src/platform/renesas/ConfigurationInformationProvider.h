@@ -18,6 +18,8 @@ public:
     virtual CHIP_ERROR GetMacAddress(uint8_t* mac) = 0;
     virtual CHIP_ERROR GetSoftwareVersionString(char * buf, size_t bufSize) = 0;
     virtual CHIP_ERROR GetSoftwareVersion(uint32_t & softwareVer) = 0;
+    virtual CHIP_ERROR GetBootReason(uint32_t & bootReason) = 0;
+    virtual CHIP_ERROR StoreBootReason(uint32_t bootReason) = 0;
 
 };
 
