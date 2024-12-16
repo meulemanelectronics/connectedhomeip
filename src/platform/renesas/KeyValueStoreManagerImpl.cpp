@@ -73,7 +73,7 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
     // exists and/or the size of the key's value. Set read_bytes_size (if non-NULL) and then return.
     if (result != CY_RSLT_SUCCESS)
     {
-        ChipLogError(DeviceLayer, "Failed to read from storage: key %s of bufferize: %d, result: %lx", key, value_size, result);
+        ChipLogError(DeviceLayer, "Failed to read from storage: key %s of buffersize: %d, result: %lx", key, value_size, result);
         return ConvertCyResultToChip(result);
     }
     if (value == NULL) 

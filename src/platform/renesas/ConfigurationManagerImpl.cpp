@@ -243,6 +243,11 @@ void ConfigurationManagerImpl::RegisterInformationProvider(ConfigurationInformat
     m_provider = &provider;
 }
 
+void ConfigurationManagerImpl::DeregisterInformationProvider()
+{
+    m_provider = nullptr;
+}
+
 CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
 {
     if (m_provider != nullptr)
