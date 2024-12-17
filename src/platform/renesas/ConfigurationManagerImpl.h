@@ -52,6 +52,7 @@ public:
     CHIP_ERROR GetInitialPairingInstruction(char * buf, size_t bufSize) override;
     CHIP_ERROR GetSecondaryPairingInstruction(char * buf, size_t bufSize) override;
     void RegisterInformationProvider(ConfigurationInformationProvider& provider);
+    void DeregisterInformationProvider();
 private:
     ConfigurationManagerImpl();
     CHIP_ERROR Init(void) override;
