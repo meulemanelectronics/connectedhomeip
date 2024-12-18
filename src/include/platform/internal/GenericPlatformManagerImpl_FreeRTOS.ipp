@@ -278,9 +278,7 @@ void GenericPlatformManagerImpl_FreeRTOS<ImplClass>::EventLoopTaskMain(void * ar
 {
     ChipLogDetail(DeviceLayer, "CHIP event task running");
     static_cast<GenericPlatformManagerImpl_FreeRTOS<ImplClass> *>(arg)->Impl()->RunEventLoop();
-    // TODO: At this point, should we not
-    // vTaskDelete(static_cast<GenericPlatformManagerImpl_FreeRTOS<ImplClass> *>(arg)->mEventLoopTask)?
-    // Or somehow get our caller to do it once this thread is joined?
+    vTaskDelete(static_cast<GenericPlatformManagerImpl_FreeRTOS<ImplClass> *>(arg)->mEventLoopTask);
 }
 
 template <class ImplClass>
@@ -423,7 +421,8 @@ template <class ImplClass>
 CHIP_ERROR GenericPlatformManagerImpl_FreeRTOS<ImplClass>::_StopEventLoopTask(void)
 {
     mShouldRunEventLoop.store(false);
-    return CHIP_NO_ERROR;
+    ChipDeviceEvent noop{ .Type = DeviceEventType::kNoOp };
+    return DeviceLayer::PlatformMgr().PostEvent(&noop);
 }
 
 // Fully instantiate the generic implementation class in whatever compilation unit includes this file.
