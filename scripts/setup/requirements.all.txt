@@ -39,8 +39,8 @@ coloredlogs
 watchdog
 build==0.8.0
 mypy==0.971
-mypy-protobuf==3.5.0
-protobuf==4.24.4
+mypy-protobuf
+protobuf
 types-protobuf==4.24.0.2
 
 cryptography
